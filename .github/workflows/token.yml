@@ -1,0 +1,24 @@
+name: Refresh access token
+
+# Weekly. Instagram tokens last 60 days; refreshing every week means a couple of
+# missed runs can never cost you the token.
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Refresh and store
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: node scripts/refresh-token.mjs

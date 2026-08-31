@@ -1,0 +1,54 @@
+name: Daily insights
+
+# 03:30 UTC — after Instagram has finalised the previous day's numbers.
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: 'Also pull the last 90 days of history (run this once, on day one)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tracker-write
+  cancel-in-progress: false
+
+jobs:
+  insights:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Account insights
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: node scripts/insights.mjs
+
+      - name: Backfill 90 days
+        if: inputs.backfill
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: node scripts/backfill.mjs
+
+      - name: Post performance
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: node scripts/media.mjs
+
+      - name: Commit
+        run: |
+          git config user.name  "jaredartt-tracker"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "insights: $(date -u +%Y-%m-%d)"
+          git pull --rebase --autostash origin ${{ github.ref_name }} || true
+          git push

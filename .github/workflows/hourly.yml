@@ -1,0 +1,39 @@
+name: Hourly snapshot
+
+# Every hour, on the hour. This is what makes the "when do I gain followers"
+# panel possible — Instagram itself only reports followers once a day.
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:      # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tracker-write     # never let two jobs commit at the same time
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch profile counters
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+        run: node scripts/snapshot.mjs
+
+      - name: Commit
+        run: |
+          git config user.name  "jaredartt-tracker"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "snapshot: $(date -u +%Y-%m-%dT%H:00Z)"
+          git pull --rebase --autostash origin ${{ github.ref_name }} || true
+          git push

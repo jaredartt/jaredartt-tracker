@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>@jaredartt — growth</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plane:        #f9f9f7;
+    --surface:      #fcfcfb;
+    --ink:          #0b0b0b;
+    --ink-2:        #52514e;
+    --muted:        #898781;
+    --grid:         #e1e0d9;
+    --axis:         #c3c2b7;
+    --hairline:     rgba(11,11,11,0.10);
+    --accent:       #2a78d6;
+    --accent-wash:  rgba(42,120,214,0.10);
+    --down:         #d03b3b;
+    --up-text:      #006300;
+    --down-text:    #b03030;
+    --s100: #cde2fb; --s200: #9ec5f4; --s300: #6da7ec;
+    --s400: #3987e5; --s500: #256abf; --s600: #184f95; --s700: #0d366b;
+    --l100: #f6d5d5; --l300: #e08a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --plane:       #0d0d0d;
+      --surface:     #1a1a19;
+      --ink:         #ffffff;
+      --ink-2:       #c3c2b7;
+      --muted:       #898781;
+      --grid:        #2c2c2a;
+      --axis:        #383835;
+      --hairline:    rgba(255,255,255,0.10);
+      --accent:      #3987e5;
+      --accent-wash: rgba(57,135,229,0.14);
+      --down:        #e66767;
+      --up-text:     #0ca30c;
+      --down-text:   #e66767;
+      --l100:        #5c2b2b;
+      --l300:        #8f3d3d;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --plane: #0d0d0d; --surface: #1a1a19; --ink: #fff; --ink-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+    --hairline: rgba(255,255,255,0.10);
+    --accent: #3987e5; --accent-wash: rgba(57,135,229,0.14);
+    --down: #e66767; --up-text: #0ca30c; --down-text: #e66767;
+    --l100: #5c2b2b; --l300: #8f3d3d;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--plane);
+    color: var(--ink);
+    font: 400 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 20px 96px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  header {
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+    padding: 56px 0 40px;
+  }
+  h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  .updated { color: var(--muted); font-size: 12.5px; }
+  .spacer { flex: 1 1 auto; }
+  .theme-btn {
+    background: none; border: 1px solid var(--hairline); border-radius: 999px;
+    color: var(--ink-2); cursor: pointer; font: inherit; font-size: 12px;
+    padding: 5px 12px;
+  }
+  .theme-btn:hover { border-color: var(--axis); }
+
+  /* ---------- hero ---------- */
+  .hero { padding-bottom: 44px; }
+  .hero-label { color: var(--muted); font-size: 12.5px; letter-spacing: 0.02em; }
+  .hero-value {
+    font-size: clamp(52px, 11vw, 84px); font-weight: 600;
+    letter-spacing: -0.035em; line-height: 1; margin: 10px 0 12px;
+  }
+  .hero-sub { color: var(--ink-2); font-size: 14px; }
+
+  /* ---------- stat row ---------- */
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px; background: var(--hairline);
+    border: 1px solid var(--hairline); border-radius: 10px; overflow: hidden;
+    margin-bottom: 56px;
+  }
+  .stat { background: var(--surface); padding: 18px 20px 20px; }
+  .stat-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+  .stat-value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .stat-delta { font-size: 12.5px; margin-top: 5px; color: var(--ink-2); }
+  .up { color: var(--up-text); }
+  .down { color: var(--down-text); }
+
+  /* ---------- panels ---------- */
+  section { margin-bottom: 56px; }
+  .panel-head {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  h2 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: -0.005em; }
+  .panel-note { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; max-width: 62ch; }
+  .insight { color: var(--ink-2); font-size: 13.5px; margin: 0 0 18px; max-width: 62ch; }
+  .insight b { color: var(--ink); font-weight: 600; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 10px; padding: 18px 16px 12px;
+  }
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; }
+
+  /* ---------- range filter ---------- */
+  .ranges { display: flex; gap: 2px; margin-left: auto; }
+  .ranges button {
+    background: none; border: 0; border-radius: 6px; color: var(--muted);
+    cursor: pointer; font: inherit; font-size: 12.5px; padding: 4px 10px;
+  }
+  .ranges button:hover { color: var(--ink-2); background: var(--accent-wash); }
+  .ranges button[aria-pressed="true"] { color: var(--ink); font-weight: 600; }
+
+  /* ---------- tooltip ---------- */
+  .tip {
+    position: absolute; pointer-events: none; z-index: 5; opacity: 0;
+    transition: opacity .1s; background: var(--surface); color: var(--ink);
+    border: 1px solid var(--hairline); border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.10);
+    padding: 8px 11px; font-size: 12.5px; white-space: nowrap;
+    transform: translate(-50%, -100%);
+  }
+  .tip .t-label { color: var(--muted); font-size: 11.5px; margin-bottom: 3px; }
+  .tip .t-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ---------- two up ---------- */
+  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 720px) { .two-up { grid-template-columns: 1fr; } }
+
+  /* ---------- heatmap ---------- */
+  .heat { overflow-x: auto; }
+  .heat-inner { min-width: 560px; }
+
+  /* ---------- posts table ---------- */
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th {
+    text-align: left; font-weight: 500; color: var(--muted); font-size: 12px;
+    padding: 0 12px 10px 0; border-bottom: 1px solid var(--hairline);
+  }
+  td {
+    padding: 11px 12px 11px 0; border-bottom: 1px solid var(--hairline);
+    font-variant-numeric: tabular-nums; color: var(--ink-2);
+  }
+  td.first { color: var(--ink); font-variant-numeric: normal; }
+  td a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--axis); }
+  td a:hover { color: var(--accent); border-color: var(--accent); }
+  .num { text-align: right; }
+
+  details { margin-top: 14px; }
+  summary {
+    color: var(--muted); cursor: pointer; font-size: 12.5px; list-style: none;
+    padding: 6px 0;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { color: var(--ink-2); }
+  summary::before { content: "＋  "; }
+  details[open] summary::before { content: "－  "; }
+
+  .empty {
+    color: var(--muted); font-size: 13px; padding: 40px 0; text-align: center;
+  }
+  .banner {
+    background: var(--accent-wash); border: 1px solid var(--hairline);
+    border-radius: 10px; color: var(--ink-2); font-size: 13px;
+    margin-bottom: 32px; padding: 14px 16px;
+  }
+  .banner b { color: var(--ink); }
+  footer { color: var(--muted); font-size: 12px; padding-top: 20px; border-top: 1px solid var(--hairline); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>@jaredartt</h1>
+    <span class="updated" id="updated"></span>
+    <span class="spacer"></span>
+    <button class="theme-btn" id="theme" type="button">Theme</button>
+  </header>
+
+  <div id="banner"></div>
+
+  <div class="hero">
+    <div class="hero-label">Followers</div>
+    <div class="hero-value" id="hero">—</div>
+    <div class="hero-sub" id="hero-sub"></div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <section>
+    <div class="panel-head">
+      <h2>Follower growth</h2>
+      <div class="ranges" id="ranges"></div>
+    </div>
+    <p class="panel-note">Every hour since tracking began. Instagram keeps 90 days; this keeps everything.</p>
+    <div class="card"><div class="chart" id="growth"></div></div>
+  </section>
+
+  <section>
+    <div class="panel-head"><h2>Net change per day</h2></div>
+    <p class="panel-note">Followers gained minus followers lost. The shape of the bars tells you more than the total does.</p>
+    <div class="card"><div class="chart" id="netchange"></div></div>
+  </section>
+
+  <section>
+    <div class="panel-head"><h2>When you gain followers</h2></div>
+    <p class="insight" id="hour-insight"></p>
+    <div class="card"><div class="chart" id="byhour"></div></div>
+    <details>
+      <summary>Show as a week grid</summary>
+      <div class="heat"><div class="heat-inner"><div class="chart" id="heatmap"></div></div></div>
+    </details>
+  </section>
+
+  <section>
+    <div class="two-up">
+      <div>
+        <div class="panel-head"><h2>Reach</h2></div>
+        <p class="panel-note">Unique accounts that saw your work.</p>
+        <div class="card"><div class="chart" id="reach"></div></div>
+      </div>
+      <div>
+        <div class="panel-head"><h2>Profile views</h2></div>
+        <p class="panel-note">People who tapped through to look at you.</p>
+        <div class="card"><div class="chart" id="profileviews"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel-head"><h2>Best posting times</h2></div>
+    <p class="insight" id="post-insight"></p>
+    <div class="card"><div class="chart" id="posthours"></div></div>
+    <details>
+      <summary>Show your posts</summary>
+      <div id="posts-table"></div>
+    </details>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+// ===========================================================================
+//  Data loading
+// ===========================================================================
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+function parseCsv(text) {
+  const lines = text.trim().split('\n').filter(Boolean);
+  if (!lines.length) return [];
+  const head = splitRow(lines[0]);
+  return lines.slice(1).map(l => {
+    const c = splitRow(l);
+    const o = {};
+    head.forEach((h, i) => { o[h] = c[i] ?? ''; });
+    return o;
+  });
+}
+function splitRow(line) {
+  const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (q) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+      else if (ch === '"') q = false;
+      else cur += ch;
+    } else if (ch === '"') q = true;
+    else if (ch === ',') { out.push(cur); cur = ''; }
+    else cur += ch;
+  }
+  out.push(cur); return out;
+}
+
+const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+
+async function load(path, parser) {
+  try {
+    const res = await fetch(path, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return parser(await res.text());
+  } catch { return null; }
+}
+
+// ===========================================================================
+//  Formatting
+// ===========================================================================
+const fmt = n => n === null || n === undefined ? '—' : n.toLocaleString('en-US');
+const compact = n => {
+  if (n === null || n === undefined) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
+  if (a >= 1e4) return (n / 1e3).toFixed(0) + 'K';
+  if (a >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(Math.round(n));
+};
+const signed = n => (n > 0 ? '+' : '') + fmt(n);
+const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const fmtDate = d => new Date(d + 'T12:00:00Z')
+  .toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const hourLabel = h => String(h).padStart(2, '0') + ':00';
+
+// Local-time parts of a UTC timestamp, in the viewer's own timezone.
+function localParts(iso) {
+  const d = new Date(iso);
+  return {
+    date: d.toLocaleDateString('en-CA'),                 // YYYY-MM-DD, local
+    hour: d.getHours(),
+    weekday: (d.getDay() + 6) % 7,                       // 0 = Monday
+  };
+}
+
+// ===========================================================================
+//  Chart primitives — plain SVG, no libraries.
+// ===========================================================================
+const SVG = 'http://www.w3.org/2000/svg';
+const el = (name, attrs = {}) => {
+  const n = document.createElementNS(SVG, name);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  return n;
+};
+
+function mountTip(host) {
+  let tip = host.querySelector('.tip');
+  if (!tip) { tip = document.createElement('div'); tip.className = 'tip'; host.appendChild(tip); }
+  return {
+    show(x, y, label, value) {
+      tip.innerHTML = `<div class="t-label">${label}</div><div class="t-value">${value}</div>`;
+      tip.style.left = x + 'px';
+      tip.style.top = (y - 10) + 'px';
+      tip.style.opacity = '1';
+    },
+    hide() { tip.style.opacity = '0'; },
+  };
+}
+
+/** Re-render on resize so the chart is always drawn at true pixel size. */
+function responsive(host, draw) {
+  let raf;
+  const run = () => {
+    const w = host.clientWidth;
+    if (w > 0) draw(w);
+  };
+  new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(run); })
+    .observe(host);
+  run();
+}
+
+function niceTicks(min, max, count = 4) {
+  if (min === max) { min -= 1; max += 1; }
+  const raw = (max - min) / count;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag;
+  const lo = Math.floor(min / step) * step;
+  const hi = Math.ceil(max / step) * step;
+  const out = [];
+  for (let v = lo; v <= hi + step / 2; v += step) out.push(Math.round(v * 1e6) / 1e6);
+  return out;
+}
+
+/**
+ * Pick a tick format from the step size, not the magnitude. Follower counts step
+ * 200 at a time around 10,000 — compacting those gives "10K, 10K, 11K", three
+ * labels that say nothing.
+ */
+function tickFmt(ticks) {
+  const step = ticks.length > 1 ? Math.abs(ticks[1] - ticks[0]) : 1;
+  if (step >= 1000) return compact;
+  if (step >= 1) return v => Math.round(v).toLocaleString('en-US');
+  const dp = Math.min(2, Math.max(1, Math.ceil(-Math.log10(step))));
+  return v => v.toFixed(dp);
+}
+
+function emptyState(host, message) {
+  host.innerHTML = `<div class="empty">${message}</div>`;
+}
+
+// --- line chart ------------------------------------------------------------
+function lineChart(host, points, opts = {}) {
+  if (!points || points.length < 2) {
+    return emptyState(host, opts.empty || 'Not enough data yet — this fills in as snapshots arrive.');
+  }
+  const tip = mountTip(host);
+
+  responsive(host, (W) => {
+    const H = opts.height || 260;
+    const pad = { t: 14, r: 62, b: 26, l: 6 };
+    const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+
+    const ys = points.map(p => p.y);
+    const ticks = niceTicks(Math.min(...ys), Math.max(...ys), 4);
+    const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+    const label = tickFmt(ticks);
+
+    const X = i => pad.l + (points.length === 1 ? iw / 2 : (i / (points.length - 1)) * iw);
+    const Y = v => pad.t + ih - ((v - y0) / (y1 - y0)) * ih;
+
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img' });
+
+    // gridlines + right-hand value axis
+    for (const t of ticks) {
+      svg.appendChild(el('line', {
+        x1: pad.l, x2: pad.l + iw, y1: Y(t), y2: Y(t),
+        stroke: 'var(--grid)', 'stroke-width': 1,
+      }));
+      const lab = el('text', {
+        x: pad.l + iw + 8, y: Y(t) + 4, fill: 'var(--muted)',
+        'font-size': 11, 'font-variant-numeric': 'tabular-nums',
+      });
+      lab.textContent = label(t);
+      svg.appendChild(lab);
+    }
+
+    const d = points.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(2)},${Y(p.y).toFixed(2)}`).join(' ');
+
+    if (opts.area !== false) {
+      svg.appendChild(el('path', {
+        d: `${d} L${X(points.length - 1)},${pad.t + ih} L${X(0)},${pad.t + ih} Z`,
+        fill: 'var(--accent-wash)', stroke: 'none',
+      }));
+    }
+    svg.appendChild(el('path', {
+      d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2,
+      'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+    }));
+
+    // x labels: first and last only — the axis is time, and two anchors are enough
+    const xlab = (i, anchor) => {
+      const t = el('text', {
+        x: X(i), y: H - 6, fill: 'var(--muted)', 'font-size': 11, 'text-anchor': anchor,
+      });
+      t.textContent = points[i].label;
+      svg.appendChild(t);
+    };
+    xlab(0, 'start');
+    xlab(points.length - 1, 'end');
+
+    // end marker with a surface ring
+    const last = points[points.length - 1];
+    svg.appendChild(el('circle', {
+      cx: X(points.length - 1), cy: Y(last.y), r: 4,
+      fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2,
+    }));
+
+    // crosshair
+    const cross = el('line', {
+      y1: pad.t, y2: pad.t + ih, stroke: 'var(--axis)', 'stroke-width': 1, opacity: 0,
+    });
+    const dot = el('circle', {
+      r: 4, fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2, opacity: 0,
+    });
+    svg.appendChild(cross); svg.appendChild(dot);
+
+    const hit = el('rect', { x: 0, y: 0, width: W, height: H, fill: 'transparent' });
+    hit.addEventListener('pointermove', ev => {
+      const r = svg.getBoundingClientRect();
+      const px = (ev.clientX - r.left) * (W / r.width);
+      const i = Math.max(0, Math.min(points.length - 1,
+        Math.round(((px - pad.l) / iw) * (points.length - 1))));
+      const p = points[i];
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i));
+      cross.setAttribute('opacity', 1);
+      dot.setAttribute('cx', X(i)); dot.setAttribute('cy', Y(p.y));
+      dot.setAttribute('opacity', 1);
+      tip.show(X(i) * (r.width / W), Y(p.y) * (r.height / H),
+        p.tipLabel || p.label, (opts.unit || '') + fmt(p.y));
+    });
+    hit.addEventListener('pointerleave', () => {
+      cross.setAttribute('opacity', 0); dot.setAttribute('opacity', 0); tip.hide();
+    });
+    svg.appendChild(hit);
+
+    host.querySelectorAll('svg').forEach(s => s.remove());
+    host.prepend(svg);
+  });
+}
+
+// --- column chart ----------------------------------------------------------
+function columnChart(host, bars, opts = {}) {
+  if (!bars || !bars.length) {
+    return emptyState(host, opts.empty || 'Nothing to show yet.');
+  }
+  const tip = mountTip(host);
+
+  responsive(host, (W) => {
+    const H = opts.height || 220;
+    const pad = { t: 14, r: 62, b: 26, l: 6 };
+    const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+
+    const vals = bars.map(b => b.value);
+    const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 4);
+    const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+    const label = tickFmt(ticks);
+    const Y = v => pad.t + ih - ((v - y0) / (y1 - y0)) * ih;
+
+    const band = iw / bars.length;
+    const bw = Math.min(opts.maxBar || 24, Math.max(2, band - 2)); // 2px surface gap
+    const r = Math.min(4, bw / 2);
+
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img' });
+
+    for (const t of ticks) {
+      svg.appendChild(el('line', {
+        x1: pad.l, x2: pad.l + iw, y1: Y(t), y2: Y(t),
+        stroke: t === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+      }));
+      const lab = el('text', {
+        x: pad.l + iw + 8, y: Y(t) + 4, fill: 'var(--muted)',
+        'font-size': 11, 'font-variant-numeric': 'tabular-nums',
+      });
+      lab.textContent = label(t);
+      svg.appendChild(lab);
+    }
+
+    const base = Y(0);
+    bars.forEach((b, i) => {
+      const cx = pad.l + band * i + band / 2;
+      const y = Y(b.value);
+      const h = Math.abs(y - base);
+      const up = b.value >= 0;
+      const color = b.color || (up ? 'var(--accent)' : 'var(--down)');
+      // rounded at the data end, square at the baseline
+      const top = up ? y : base;
+      const path = up
+        ? `M${cx - bw / 2},${base} L${cx - bw / 2},${top + r} Q${cx - bw / 2},${top} ${cx - bw / 2 + r},${top} L${cx + bw / 2 - r},${top} Q${cx + bw / 2},${top} ${cx + bw / 2},${top + r} L${cx + bw / 2},${base} Z`
+        : `M${cx - bw / 2},${base} L${cx - bw / 2},${base + h - r} Q${cx - bw / 2},${base + h} ${cx - bw / 2 + r},${base + h} L${cx + bw / 2 - r},${base + h} Q${cx + bw / 2},${base + h} ${cx + bw / 2},${base + h - r} L${cx + bw / 2},${base} Z`;
+
+      const rect = el('path', { d: h < 0.5 ? `M${cx - bw / 2},${base} h${bw}` : path, fill: color });
+      svg.appendChild(rect);
+
+      const hit = el('rect', {
+        x: pad.l + band * i, y: pad.t, width: band, height: ih, fill: 'transparent',
+      });
+      hit.addEventListener('pointerenter', () => {
+        const rc = svg.getBoundingClientRect();
+        tip.show(cx * (rc.width / W), Math.min(y, base) * (rc.height / H),
+          b.label, (opts.signed ? signed(b.value) : fmt(b.value)) + (opts.unit || ''));
+      });
+      hit.addEventListener('pointerleave', () => tip.hide());
+      svg.appendChild(hit);
+    });
+
+    // sparse x labels so they never collide
+    const every = Math.max(1, Math.ceil(bars.length / (W < 520 ? 5 : 9)));
+    bars.forEach((b, i) => {
+      if (i % every !== 0 && i !== bars.length - 1) return;
+      const t = el('text', {
+        x: pad.l + band * i + band / 2, y: H - 6,
+        fill: 'var(--muted)', 'font-size': 11, 'text-anchor': 'middle',
+      });
+      t.textContent = b.short ?? b.label;
+      svg.appendChild(t);
+    });
+
+    host.querySelectorAll('svg').forEach(s => s.remove());
+    host.prepend(svg);
+  });
+}
+
+// --- heatmap ---------------------------------------------------------------
+function heatmap(host, cells, opts = {}) {
+  const vals = cells.filter(c => c.value !== null).map(c => c.value);
+  if (!vals.length) return emptyState(host, 'Needs about two weeks of hourly snapshots.');
+  const tip = mountTip(host);
+  const max = Math.max(...vals, 0.0001);
+
+  // Diverging, because this data genuinely has two signs: hours you gain
+  // followers and hours you lose them. Gains run up the blue ramp; losses get
+  // red; a flat hour stays neutral so "nothing happened" never looks like growth.
+  const ramp = ['var(--s100)','var(--s200)','var(--s300)','var(--s400)','var(--s500)','var(--s600)','var(--s700)'];
+  const lossRamp = ['var(--l100)', 'var(--l300)'];
+  const minV = Math.min(...vals, 0);
+  const colorFor = v => {
+    if (v === null) return 'transparent';
+    if (v === 0) return 'var(--grid)';
+    if (v < 0) return lossRamp[minV < -0.0001 && v / minV > 0.5 ? 1 : 0];
+    return ramp[Math.min(ramp.length - 1, Math.floor((v / max) * ramp.length))];
+  };
+
+  responsive(host, (W) => {
+    const left = 34, top = 18, gap = 2;
+    const cw = (W - left) / 24;
+    const ch = 26;
+    const H = top + ch * 7 + 6;
+    const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img' });
+
+    for (let h = 0; h < 24; h += 3) {
+      const t = el('text', {
+        x: left + cw * h + cw / 2, y: 11, fill: 'var(--muted)',
+        'font-size': 10.5, 'text-anchor': 'middle',
+      });
+      t.textContent = String(h).padStart(2, '0');
+      svg.appendChild(t);
+    }
+    for (let d = 0; d < 7; d++) {
+      const t = el('text', {
+        x: 0, y: top + ch * d + ch / 2 + 3.5, fill: 'var(--muted)', 'font-size': 10.5,
+      });
+      t.textContent = dayName[d];
+      svg.appendChild(t);
+    }
+
+    for (const c of cells) {
+      const x = left + cw * c.hour, y = top + ch * c.weekday;
+      const rect = el('rect', {
+        x: x + gap / 2, y: y + gap / 2,
+        width: Math.max(1, cw - gap), height: ch - gap,
+        rx: 3, fill: colorFor(c.value),
+      });
+      if (c.value === null) {
+        rect.setAttribute('stroke', 'var(--grid)');
+        rect.setAttribute('stroke-width', 1);
+      }
+      rect.addEventListener('pointerenter', () => {
+        const rc = svg.getBoundingClientRect();
+        tip.show((x + cw / 2) * (rc.width / W), y * (rc.height / H),
+          `${dayName[c.weekday]} ${hourLabel(c.hour)}`,
+          c.value === null ? 'no data' : signed(Math.round(c.value * 10) / 10) + ' avg');
+      });
+      rect.addEventListener('pointerleave', () => tip.hide());
+      svg.appendChild(rect);
+    }
+
+    host.querySelectorAll('svg').forEach(s => s.remove());
+    host.prepend(svg);
+  });
+}
+
+// ===========================================================================
+//  Build the page
+// ===========================================================================
+(async function main() {
+  let followers = await load('data/followers.csv', parseCsv);
+  let insights  = await load('data/insights.csv', parseCsv);
+  let media     = await load('data/media.json', JSON.parse);
+  let demo = false;
+
+  if (!followers || followers.length < 2) {
+    ({ followers, insights, media } = demoData());
+    demo = true;
+    document.getElementById('banner').innerHTML =
+      `<div class="banner"><b>Showing sample data.</b> This is what the dashboard looks like once
+       it has been collecting for a few months. Real numbers replace it as soon as the first
+       workflow run finishes.</div>`;
+  }
+
+  followers = followers
+    .filter(r => num(r.followers) !== null)
+    .sort((a, b) => a.ts_utc.localeCompare(b.ts_utc));
+
+  // ---- daily series (last reading of each local day) ----------------------
+  const dailyMap = new Map();
+  for (const r of followers) {
+    const { date } = localParts(r.ts_utc);
+    dailyMap.set(date, num(r.followers));
+  }
+  const daily = [...dailyMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  const current = daily.length ? daily[daily.length - 1][1] : null;
+  const at = back => {
+    if (daily.length < 2) return null;
+    const i = daily.length - 1 - back;
+    return i >= 0 ? daily[i][1] : daily[0][1];
+  };
+
+  document.getElementById('hero').textContent = fmt(current);
+  const d30 = current !== null && at(30) !== null ? current - at(30) : null;
+  document.getElementById('hero-sub').innerHTML = d30 === null ? '' :
+    `<span class="${d30 >= 0 ? 'up' : 'down'}">${signed(d30)}</span> in the last 30 days`;
+
+  document.getElementById('updated').textContent = followers.length
+    ? 'updated ' + new Date(followers[followers.length - 1].ts_utc)
+        .toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  // ---- stat row ----------------------------------------------------------
+  const sumLast = (rows, key, n) => {
+    const v = rows.slice(-n).map(r => num(r[key])).filter(x => x !== null);
+    return v.length ? v.reduce((a, b) => a + b, 0) : null;
+  };
+  const ins = (insights || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+
+  const stats = [
+    { label: 'Last 7 days',  value: signed(current - at(7)), cls: current - at(7) >= 0 ? 'up' : 'down', sub: 'net followers' },
+    { label: 'Last 30 days', value: signed(d30 ?? 0), cls: (d30 ?? 0) >= 0 ? 'up' : 'down', sub: 'net followers' },
+    { label: 'Reach', value: compact(sumLast(ins, 'reach', 30)), sub: 'last 30 days' },
+    { label: 'Profile views', value: compact(sumLast(ins, 'profile_views', 30)), sub: 'last 30 days' },
+    { label: 'Posts', value: fmt(media ? media.length : null), sub: 'tracked' },
+  ];
+  document.getElementById('stats').innerHTML = stats.map(s => `
+    <div class="stat">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value ${s.cls || ''}">${s.value}</div>
+      <div class="stat-delta">${s.sub}</div>
+    </div>`).join('');
+
+  // ---- growth chart with range filter ------------------------------------
+  const rangesEl = document.getElementById('ranges');
+  const growthEl = document.getElementById('growth');
+  const RANGES = [
+    { label: '7d', days: 7 }, { label: '30d', days: 30 },
+    { label: '90d', days: 90 }, { label: 'All', days: Infinity },
+  ];
+  let active = daily.length > 60 ? 1 : 3;
+
+  const drawGrowth = () => {
+    const days = RANGES[active].days;
+    // Below ~4 days, show the hourly detail; above it, one point per day.
+    const useHourly = days <= 7 && followers.length > 24;
+    let points;
+    if (useHourly) {
+      const cutoff = Date.now() - days * 86400000;
+      points = followers.filter(r => Date.parse(r.ts_utc) >= cutoff).map(r => {
+        const d = new Date(r.ts_utc);
+        return {
+          y: num(r.followers),
+          label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+          tipLabel: d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        };
+      });
+    } else {
+      const slice = days === Infinity ? daily : daily.slice(-days);
+      points = slice.map(([date, y]) => ({ y, label: fmtDate(date), tipLabel: fmtDate(date) }));
+    }
+    growthEl.innerHTML = '';
+    lineChart(growthEl, points, { height: 280 });
+  };
+
+  rangesEl.innerHTML = RANGES.map((r, i) =>
+    `<button type="button" data-i="${i}" aria-pressed="${i === active}">${r.label}</button>`).join('');
+  rangesEl.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    active = Number(b.dataset.i);
+    rangesEl.querySelectorAll('button').forEach((x, i) =>
+      x.setAttribute('aria-pressed', String(i === active)));
+    drawGrowth();
+  });
+  drawGrowth();
+
+  // ---- net change per day ------------------------------------------------
+  const netBars = [];
+  for (let i = 1; i < daily.length; i++) {
+    netBars.push({
+      label: fmtDate(daily[i][0]),
+      short: fmtDate(daily[i][0]),
+      value: daily[i][1] - daily[i - 1][1],
+    });
+  }
+  columnChart(document.getElementById('netchange'), netBars.slice(-60), { signed: true, height: 220 });
+
+  // ---- hour of day -------------------------------------------------------
+  // Difference between consecutive hourly snapshots, attributed to the hour
+  // that just finished, in your local time.
+  const hourSum = Array(24).fill(0), hourN = Array(24).fill(0);
+  const grid = Array.from({ length: 7 }, () => Array(24).fill(null));
+  const gridN = Array.from({ length: 7 }, () => Array(24).fill(0));
+
+  for (let i = 1; i < followers.length; i++) {
+    const prev = followers[i - 1], curr = followers[i];
+    const gapH = (Date.parse(curr.ts_utc) - Date.parse(prev.ts_utc)) / 3600000;
+    if (gapH < 0.5 || gapH > 1.5) continue;          // only clean hour-to-hour steps
+    const delta = num(curr.followers) - num(prev.followers);
+    if (delta === null || !Number.isFinite(delta)) continue;
+    const { hour, weekday } = localParts(curr.ts_utc);
+    hourSum[hour] += delta; hourN[hour]++;
+    grid[weekday][hour] = (grid[weekday][hour] ?? 0) + delta;
+    gridN[weekday][hour]++;
+  }
+
+  const hourAvg = hourSum.map((s, h) => hourN[h] ? s / hourN[h] : null);
+  const hourBars = hourAvg.map((v, h) => ({
+    label: hourLabel(h), short: String(h).padStart(2, '0'),
+    value: v === null ? 0 : Math.round(v * 100) / 100,
+  }));
+  columnChart(document.getElementById('byhour'), hourBars,
+    { signed: true, height: 220, maxBar: 22 });
+
+  const ranked = hourAvg.map((v, h) => ({ h, v })).filter(x => x.v !== null && x.v > 0)
+    .sort((a, b) => b.v - a.v);
+  const hoursTracked = hourN.reduce((a, b) => a + b, 0);
+  document.getElementById('hour-insight').innerHTML = ranked.length >= 3
+    ? `Averaged across ${hoursTracked.toLocaleString()} hourly readings, your strongest hours are
+       <b>${hourLabel(ranked[0].h)}</b>, <b>${hourLabel(ranked[1].h)}</b> and
+       <b>${hourLabel(ranked[2].h)}</b> — local time. This is the one number no analytics
+       subscription will show you, because it only exists if something looks every hour.`
+    : `Building up. Each hourly snapshot adds a reading; the pattern becomes trustworthy after
+       about two weeks.`;
+
+  heatmap(document.getElementById('heatmap'),
+    grid.flatMap((row, weekday) => row.map((v, hour) => ({
+      weekday, hour, value: gridN[weekday][hour] ? v / gridN[weekday][hour] : null,
+    }))));
+
+  // ---- reach & profile views ---------------------------------------------
+  const insSeries = key => ins
+    .map(r => ({ y: num(r[key]), label: fmtDate(r.date), tipLabel: fmtDate(r.date) }))
+    .filter(p => p.y !== null)
+    .slice(-90);
+
+  lineChart(document.getElementById('reach'), insSeries('reach'),
+    { height: 200, empty: 'Waiting for the first daily run.' });
+  lineChart(document.getElementById('profileviews'), insSeries('profile_views'),
+    { height: 200, empty: 'Waiting for the first daily run.' });
+
+  // ---- best posting times -------------------------------------------------
+  const posts = (media || []).map(m => {
+    const i = m.insights || {};
+    const interactions = i.total_interactions ??
+      ((m.like_count || 0) + (m.comments_count || 0) + (i.saved || 0) + (i.shares || 0));
+    const { hour, weekday } = localParts(m.timestamp);
+    return { ...m, hour, weekday, interactions, reach: i.reach ?? null };
+  }).filter(p => Number.isFinite(p.interactions));
+
+  const byHour = Array.from({ length: 24 }, () => []);
+  for (const p of posts) byHour[p.hour].push(p.interactions);
+  const median = a => {
+    if (!a.length) return null;
+    const s = [...a].sort((x, y) => x - y), m = s.length >> 1;
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  const postBars = byHour.map((vals, h) => ({
+    label: `${hourLabel(h)} · ${vals.length} post${vals.length === 1 ? '' : 's'}`,
+    short: String(h).padStart(2, '0'),
+    value: Math.round(median(vals) ?? 0),
+  }));
+  columnChart(document.getElementById('posthours'), postBars,
+    { height: 220, maxBar: 22, unit: '' });
+
+  const best = postBars.map((b, h) => ({ h, v: b.value, n: byHour[h].length }))
+    .filter(x => x.n >= 2).sort((a, b) => b.v - a.v);
+  document.getElementById('post-insight').innerHTML = best.length
+    ? `Median interactions per post, by the hour you published. Your best window is
+       <b>${hourLabel(best[0].h)}</b> (${best[0].n} posts, median ${fmt(best[0].v)}).
+       Hours with a single post are shown but worth ignoring.`
+    : `Once you have a few posts across different hours, this shows which times actually earn
+       engagement — from your own history, not generic advice.`;
+
+  const top = [...posts].sort((a, b) => b.interactions - a.interactions).slice(0, 12);
+  document.getElementById('posts-table').innerHTML = top.length ? `
+    <table>
+      <thead><tr>
+        <th>Posted</th><th>Caption</th>
+        <th class="num">Reach</th><th class="num">Interactions</th>
+      </tr></thead>
+      <tbody>${top.map(p => `
+        <tr>
+          <td class="first">${new Date(p.timestamp).toLocaleDateString('en-GB',
+            { day: 'numeric', month: 'short', year: '2-digit' })} · ${hourLabel(p.hour)}</td>
+          <td class="first">${p.permalink
+            ? `<a href="${p.permalink}" target="_blank" rel="noopener">${escapeHtml(p.caption) || 'View post'}</a>`
+            : escapeHtml(p.caption)}</td>
+          <td class="num">${compact(p.reach)}</td>
+          <td class="num">${fmt(p.interactions)}</td>
+        </tr>`).join('')}</tbody>
+    </table>` : '<div class="empty">No posts recorded yet.</div>';
+
+  document.getElementById('footer').textContent =
+    `${followers.length.toLocaleString()} hourly readings · ${ins.length} days of insights · ` +
+    `times shown in ${TZ}` + (demo ? ' · sample data' : '');
+})();
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// ---- theme toggle ---------------------------------------------------------
+(function theme() {
+  const btn = document.getElementById('theme');
+  const get = () => { try { return localStorage.getItem('theme'); } catch { return null; } };
+  const set = v => { try { v ? localStorage.setItem('theme', v) : localStorage.removeItem('theme'); } catch {} };
+  const apply = v => {
+    if (v) document.documentElement.setAttribute('data-theme', v);
+    else document.documentElement.removeAttribute('data-theme');
+    btn.textContent = v ? (v === 'dark' ? 'Dark' : 'Light') : 'System';
+  };
+  apply(get());
+  btn.addEventListener('click', () => {
+    const order = [null, 'light', 'dark'];
+    const next = order[(order.indexOf(get()) + 1) % 3];
+    set(next); apply(next);
+  });
+})();
+
+// ===========================================================================
+//  Sample data — only used before the first real run, so the page is never blank.
+// ===========================================================================
+function demoData() {
+  const followers = [];
+  const hours = 24 * 120;
+  let f = 8420;
+  const now = Date.now();
+  // A plausible daily rhythm: quiet mornings, a strong evening, a late-night tail.
+  const shape = h => [0.4,0.3,0.2,0.15,0.1,0.15,0.3,0.5,0.7,0.8,0.85,0.9,
+                      1.0,1.0,0.95,0.9,1.05,1.2,1.5,1.9,2.2,1.8,1.1,0.7][h];
+  for (let i = hours; i >= 0; i--) {
+    const t = new Date(now - i * 3600000);
+    const h = t.getHours();
+    const trend = 1 + (hours - i) / hours * 0.6;
+    const gain = shape(h) * trend * (0.6 + Math.random() * 0.9) - 0.35;
+    f += gain;
+    followers.push({
+      ts_utc: new Date(t.setMinutes(0, 0, 0)).toISOString().slice(0, 13) + ':00:00Z',
+      followers: String(Math.round(f)), following: '612', posts: '148',
+    });
+  }
+  const insights = [];
+  for (let i = 89; i >= 0; i--) {
+    const d = new Date(now - i * 86400000);
+    const base = 2600 + (89 - i) * 22;
+    const wk = [1, 1.05, 1.1, 1.15, 1.3, 1.4, 1.2][(d.getDay() + 6) % 7];
+    const spike = Math.random() < 0.06 ? 3.2 : 1;
+    const reach = Math.round(base * wk * spike * (0.8 + Math.random() * 0.5));
+    insights.push({
+      date: d.toLocaleDateString('en-CA'),
+      reach: String(reach),
+      views: String(Math.round(reach * 1.7)),
+      profile_views: String(Math.round(reach * 0.075 * (0.7 + Math.random() * 0.8))),
+      accounts_engaged: String(Math.round(reach * 0.11)),
+      total_interactions: String(Math.round(reach * 0.14)),
+      follows: String(Math.round(reach * 0.012)),
+      unfollows: String(Math.round(reach * 0.003)),
+    });
+  }
+  const captions = [
+    'Study in oil, late afternoon light', 'New series — first piece', 'Detail from the large canvas',
+    'Process shot, layer three', 'Finished after four months', 'Sketchbook page',
+    'Commission, private collection', 'Studio at 6am', 'Colour tests', 'Framed and ready',
+    'Work in progress', 'Charcoal, A2',
+  ];
+  const media = [];
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(now - (i * 2.1 + Math.random() * 2) * 86400000);
+    d.setHours([9, 11, 13, 17, 18, 19, 20, 21, 22][Math.floor(Math.random() * 9)],
+      Math.floor(Math.random() * 60), 0, 0);
+    const hourBoost = shape(d.getHours());
+    const reach = Math.round(2400 * hourBoost * (0.6 + Math.random() * 1.1));
+    media.push({
+      id: 'demo' + i, timestamp: d.toISOString(), media_type: 'FEED',
+      permalink: '', caption: captions[i % captions.length],
+      like_count: Math.round(reach * 0.11), comments_count: Math.round(reach * 0.008),
+      insights: { reach, saved: Math.round(reach * 0.02), shares: Math.round(reach * 0.006),
+                  total_interactions: Math.round(reach * 0.14) },
+    });
+  }
+  return { followers, insights, media };
+}
+</script>
+</body>
+</html>
