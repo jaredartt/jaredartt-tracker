@@ -6,33 +6,43 @@
   },
   "guild_id_env": "938690959221350450",
   "identity": {
-    "ok": false,
-    "error": "Discord API 401: 401: Unauthorized",
-    "status": 401,
-    "code": 0
+    "ok": true,
+    "value": {
+      "id": "1543956363653288007",
+      "username": "Artist Academy Tracker",
+      "bot": true
+    }
   },
   "guilds_the_bot_is_in": {
-    "ok": false,
-    "error": "Discord API 401: 401: Unauthorized",
-    "status": 401,
-    "code": 0
+    "ok": true,
+    "value": [
+      {
+        "id": "938690959221350450",
+        "name": "Artist Academy"
+      }
+    ]
   },
   "target_guild": {
-    "ok": false,
-    "error": "Discord API 401: 401: Unauthorized",
-    "status": 401,
-    "code": 0
+    "ok": true,
+    "value": {
+      "id": "938690959221350450",
+      "name": "Artist Academy",
+      "members": 5360,
+      "online": 646
+    }
   },
   "members_intent": {
-    "ok": false,
-    "error": "Discord API 401: 401: Unauthorized",
-    "status": 401,
-    "code": 0
+    "ok": true,
+    "value": {
+      "returned": 1,
+      "sample_joined_at": "2025-09-30T19:11:44.597000+00:00"
+    }
   },
   "channels": {
-    "ok": false,
-    "error": "Discord API 401: 401: Unauthorized",
-    "status": 401,
-    "code": 0
+    "ok": true,
+    "value": {
+      "total": 165,
+      "text": 144
+    }
   }
 }
