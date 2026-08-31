@@ -4,253 +4,335 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>@jaredartt — growth</title>
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
+  /* ===================================================================
+     Palette. Every colour below was run through a contrast + colour-blind
+     validator against its own surface. The teal/coral pair matters most:
+     it carries gains vs losses, and a red/green pair would collapse into
+     one colour for ~8% of men.
+     =================================================================== */
   :root {
     color-scheme: light;
-    --plane:        #f9f9f7;
-    --surface:      #fcfcfb;
-    --ink:          #0b0b0b;
-    --ink-2:        #52514e;
-    --muted:        #898781;
-    --grid:         #e1e0d9;
-    --axis:         #c3c2b7;
-    --hairline:     rgba(11,11,11,0.10);
-    --accent:       #2a78d6;
-    --accent-wash:  rgba(42,120,214,0.10);
-    --down:         #d03b3b;
-    --up-text:      #006300;
-    --down-text:    #b03030;
-    --s100: #cde2fb; --s200: #9ec5f4; --s300: #6da7ec;
-    --s400: #3987e5; --s500: #256abf; --s600: #184f95; --s700: #0d366b;
-    --l100: #f6d5d5; --l300: #e08a8a;
+    --page:      #ffffff;
+    --ink:       #0b0f1a;
+    --ink-2:     #4a5568;
+    --muted:     #8a93a5;
+
+    --blue:      #2b6bff;
+    --pink:      #e0189a;
+    --orange:    #c25100;
+    --teal:      #00b3a4;
+    --violet:    #7c4dff;
+
+    --gain:      #00b3a4;
+    --gain-ink:  #007d72;
+    --loss:      #ff4d6d;
+    --loss-ink:  #d42846;
+
+    --tint:      rgba(43,107,255,.06);
+    --tint-2:    rgba(43,107,255,.13);
+    --grid:      rgba(11,15,26,.07);
+    --shadow:    0 1px 2px rgba(11,15,26,.04), 0 8px 24px rgba(11,15,26,.05);
+    --shadow-up: 0 2px 6px rgba(11,15,26,.06), 0 18px 44px rgba(11,15,26,.10);
+    --pill:      rgba(11,15,26,.05);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --plane:       #0d0d0d;
-      --surface:     #1a1a19;
-      --ink:         #ffffff;
-      --ink-2:       #c3c2b7;
-      --muted:       #898781;
-      --grid:        #2c2c2a;
-      --axis:        #383835;
-      --hairline:    rgba(255,255,255,0.10);
-      --accent:      #3987e5;
-      --accent-wash: rgba(57,135,229,0.14);
-      --down:        #e66767;
-      --up-text:     #0ca30c;
-      --down-text:   #e66767;
-      --l100:        #5c2b2b;
-      --l300:        #8f3d3d;
+      --page:     #0b0f19;
+      --ink:      #f2f5fa;
+      --ink-2:    #a8b3c7;
+      --muted:    #6e7a90;
+      --blue:     #4c82f7;
+      --pink:     #de3e9b;
+      --orange:   #d96a00;
+      --teal:     #00a79a;
+      --violet:   #8b6bf0;
+      --gain:     #00a79a;
+      --gain-ink: #16c2b2;
+      --loss:     #f0455f;
+      --loss-ink: #ff7089;
+      --tint:     rgba(255,255,255,.035);
+      --tint-2:   rgba(255,255,255,.07);
+      --grid:     rgba(255,255,255,.07);
+      --shadow:   0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.32);
+      --shadow-up:0 2px 8px rgba(0,0,0,.5), 0 20px 48px rgba(0,0,0,.45);
+      --pill:     rgba(255,255,255,.07);
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --plane: #0d0d0d; --surface: #1a1a19; --ink: #fff; --ink-2: #c3c2b7;
-    --muted: #898781; --grid: #2c2c2a; --axis: #383835;
-    --hairline: rgba(255,255,255,0.10);
-    --accent: #3987e5; --accent-wash: rgba(57,135,229,0.14);
-    --down: #e66767; --up-text: #0ca30c; --down-text: #e66767;
-    --l100: #5c2b2b; --l300: #8f3d3d;
+    --page: #0b0f19; --ink: #f2f5fa; --ink-2: #a8b3c7; --muted: #6e7a90;
+    --blue: #4c82f7; --pink: #de3e9b; --orange: #d96a00; --teal: #00a79a; --violet: #8b6bf0;
+    --gain: #00a79a; --gain-ink: #16c2b2; --loss: #f0455f; --loss-ink: #ff7089;
+    --tint: rgba(255,255,255,.035); --tint-2: rgba(255,255,255,.07);
+    --grid: rgba(255,255,255,.07);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.32);
+    --shadow-up: 0 2px 8px rgba(0,0,0,.5), 0 20px 48px rgba(0,0,0,.45);
+    --pill: rgba(255,255,255,.07);
   }
 
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    background: var(--plane);
+    background: var(--page);
     color: var(--ink);
-    font: 400 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    font: 400 15px/1.6 Lexend, system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
-    padding: 0 20px 96px;
+    padding: 0 20px 120px;
+    overflow-x: hidden;
   }
-  .wrap { max-width: 1080px; margin: 0 auto; }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  h1, h2, .display { font-family: Unbounded, system-ui, sans-serif; letter-spacing: -0.02em; }
+
+  /* ---------- accent scoping: one hue per block ---------- */
+  .a-blue   { --accent: var(--blue);   --wash: 43,107,255; }
+  .a-pink   { --accent: var(--pink);   --wash: 224,24,154; }
+  .a-orange { --accent: var(--orange); --wash: 194,81,0; }
+  .a-teal   { --accent: var(--teal);   --wash: 0,179,164; }
+  .a-violet { --accent: var(--violet); --wash: 124,77,255; }
+  .a-loss   { --accent: var(--loss);   --wash: 255,77,109; }
 
   /* ---------- header ---------- */
   header {
-    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
-    padding: 56px 0 40px;
+    align-items: center; display: flex; gap: 14px; flex-wrap: wrap;
+    padding: 44px 0 34px;
   }
-  h1 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
-  .updated { color: var(--muted); font-size: 12.5px; }
+  .mark {
+    align-items: center; background: var(--ink); border-radius: 14px;
+    color: var(--page); display: flex; font-family: Unbounded, sans-serif;
+    font-size: 15px; font-weight: 800; height: 38px; justify-content: center;
+    width: 38px;
+  }
+  h1 { font-size: 17px; font-weight: 600; margin: 0; }
+  .updated { color: var(--muted); font-size: 13px; }
   .spacer { flex: 1 1 auto; }
-  .theme-btn {
-    background: none; border: 1px solid var(--hairline); border-radius: 999px;
-    color: var(--ink-2); cursor: pointer; font: inherit; font-size: 12px;
-    padding: 5px 12px;
+
+  .btn {
+    background: var(--pill); border: 0; border-radius: 999px; color: var(--ink-2);
+    cursor: pointer; font: 400 13px Lexend, sans-serif; padding: 9px 18px;
+    transition: transform .16s cubic-bezier(.2,.9,.3,1.2), background .16s, color .16s;
   }
-  .theme-btn:hover { border-color: var(--axis); }
+  .btn:hover { background: var(--tint-2); color: var(--ink); transform: translateY(-1px); }
+  .btn:active { transform: scale(.94); }
 
   /* ---------- hero ---------- */
-  .hero { padding-bottom: 44px; }
-  .hero-label { color: var(--muted); font-size: 12.5px; letter-spacing: 0.02em; }
+  .hero {
+    background:
+      radial-gradient(120% 140% at 0% 0%, rgba(43,107,255,.13), transparent 62%),
+      radial-gradient(120% 140% at 100% 100%, rgba(124,77,255,.13), transparent 62%),
+      var(--tint);
+    border-radius: 30px; margin-bottom: 16px; padding: 42px 40px 38px;
+  }
+  .hero-label {
+    color: var(--muted); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase;
+  }
   .hero-value {
-    font-size: clamp(52px, 11vw, 84px); font-weight: 600;
-    letter-spacing: -0.035em; line-height: 1; margin: 10px 0 12px;
+    font-size: clamp(60px, 12vw, 108px); font-weight: 800; line-height: .95;
+    margin: 16px 0 18px; letter-spacing: -0.045em;
   }
-  .hero-sub { color: var(--ink-2); font-size: 14px; }
+  .hero-sub { color: var(--ink-2); font-size: 15px; }
+  .up { color: var(--gain-ink); }
+  .down { color: var(--loss-ink); }
+  .pending { color: var(--muted); }
 
-  /* ---------- stat row ---------- */
-  .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1px; background: var(--hairline);
-    border: 1px solid var(--hairline); border-radius: 10px; overflow: hidden;
-    margin-bottom: 56px;
+  /* ---------- stat tiles ---------- */
+  /* Two deliberate rows: the three follower deltas, then the four activity
+     measures. Auto-fit would leave an orphan tile stranded on its own line. */
+  .stats { display: grid; gap: 16px; margin-bottom: 16px; }
+  .stats-3 { grid-template-columns: repeat(3, 1fr); }
+  .stats-4 { grid-template-columns: repeat(4, 1fr); margin-bottom: 60px; }
+  @media (max-width: 880px) {
+    .stats-3, .stats-4 { grid-template-columns: repeat(2, 1fr); }
   }
-  .stat { background: var(--surface); padding: 18px 20px 20px; }
-  .stat-label { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
-  .stat-value { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
-  .stat-delta { font-size: 12.5px; margin-top: 5px; color: var(--ink-2); }
-  .up { color: var(--up-text); }
-  .down { color: var(--down-text); }
+  @media (max-width: 460px) {
+    .stats-3, .stats-4 { grid-template-columns: 1fr; }
+  }
+  .stat {
+    background: rgba(var(--wash), .07); border-radius: 22px; padding: 22px 22px 24px;
+    position: relative; overflow: hidden;
+    transition: transform .22s cubic-bezier(.2,.9,.3,1.2), box-shadow .22s, background .22s;
+  }
+  .stat::after {
+    background: var(--accent); border-radius: 999px; content: ''; height: 4px;
+    left: 22px; position: absolute; top: 0; width: 30px;
+    transition: width .28s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .stat:hover { background: rgba(var(--wash), .13); box-shadow: var(--shadow-up); transform: translateY(-4px); }
+  .stat:hover::after { width: calc(100% - 44px); }
+  .stat-label { color: var(--ink-2); font-size: 12.5px; margin-bottom: 12px; }
+  .stat-value {
+    font-family: Unbounded, sans-serif; font-size: 30px; font-weight: 600;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .stat-sub { color: var(--muted); font-size: 12px; margin-top: 8px; }
 
-  /* ---------- panels ---------- */
-  section { margin-bottom: 56px; }
-  .panel-head {
-    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
-    margin-bottom: 6px;
+  /* ---------- blocks ---------- */
+  .block {
+    background: rgba(var(--wash), .06); border-radius: 30px;
+    margin-bottom: 24px; padding: 34px 34px 26px;
+    transition: background .3s;
   }
-  h2 { font-size: 14px; font-weight: 600; margin: 0; letter-spacing: -0.005em; }
-  .panel-note { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; max-width: 62ch; }
-  .insight { color: var(--ink-2); font-size: 13.5px; margin: 0 0 18px; max-width: 62ch; }
-  .insight b { color: var(--ink); font-weight: 600; }
+  .block:hover { background: rgba(var(--wash), .09); }
+  .block-head { align-items: center; display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+  h2 { font-size: 19px; font-weight: 600; margin: 0; }
+  .dot {
+    background: var(--accent); border-radius: 999px; height: 10px; width: 10px;
+    box-shadow: 0 0 0 4px rgba(var(--wash), .18);
+  }
+  .note { color: var(--ink-2); font-size: 13.5px; margin: 0 0 22px; max-width: 68ch; }
+  .note b { color: var(--ink); font-weight: 500; }
+  .two-up { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 760px) {
+    .two-up { grid-template-columns: 1fr; }
+    .block, .hero { padding: 26px 20px 20px; border-radius: 24px; }
+  }
 
-  .card {
-    background: var(--surface); border: 1px solid var(--hairline);
-    border-radius: 10px; padding: 18px 16px 12px;
-  }
   .chart { position: relative; width: 100%; }
-  .chart svg { display: block; width: 100%; }
+  .chart svg { display: block; overflow: visible; width: 100%; }
 
-  /* ---------- range filter ---------- */
-  .ranges { display: flex; gap: 2px; margin-left: auto; }
+  /* ---------- range pills ---------- */
+  .ranges { display: flex; gap: 6px; margin-left: auto; }
   .ranges button {
-    background: none; border: 0; border-radius: 6px; color: var(--muted);
-    cursor: pointer; font: inherit; font-size: 12.5px; padding: 4px 10px;
+    background: transparent; border: 0; border-radius: 999px; color: var(--muted);
+    cursor: pointer; font: 400 13px Lexend, sans-serif; padding: 7px 15px;
+    transition: transform .16s cubic-bezier(.2,.9,.3,1.2), background .18s, color .18s;
   }
-  .ranges button:hover { color: var(--ink-2); background: var(--accent-wash); }
-  .ranges button[aria-pressed="true"] { color: var(--ink); font-weight: 600; }
+  .ranges button:hover { background: rgba(var(--wash), .12); color: var(--ink); }
+  .ranges button:active { transform: scale(.92); }
+  .ranges button[aria-pressed="true"] {
+    background: var(--accent); color: #fff; font-weight: 500;
+  }
 
   /* ---------- tooltip ---------- */
   .tip {
-    position: absolute; pointer-events: none; z-index: 5; opacity: 0;
-    transition: opacity .1s; background: var(--surface); color: var(--ink);
-    border: 1px solid var(--hairline); border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.10);
-    padding: 8px 11px; font-size: 12.5px; white-space: nowrap;
-    transform: translate(-50%, -100%);
+    background: var(--ink); border-radius: 14px; color: var(--page);
+    font-size: 12.5px; left: 0; opacity: 0; padding: 10px 14px; pointer-events: none;
+    position: absolute; top: 0; white-space: nowrap; z-index: 6;
+    transform: translate(-50%, -128%) scale(.94); transform-origin: 50% 120%;
+    transition: opacity .14s, transform .18s cubic-bezier(.2,.9,.3,1.4);
   }
-  .tip .t-label { color: var(--muted); font-size: 11.5px; margin-bottom: 3px; }
-  .tip .t-value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tip.on { opacity: 1; transform: translate(-50%, -118%) scale(1); }
+  .tip .t-label { opacity: .62; font-size: 11.5px; margin-bottom: 4px; }
+  .tip .t-value { font-family: Unbounded, sans-serif; font-size: 14px; font-weight: 600; }
 
-  /* ---------- two up ---------- */
-  .two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media (max-width: 720px) { .two-up { grid-template-columns: 1fr; } }
-
-  /* ---------- heatmap ---------- */
-  .heat { overflow-x: auto; }
-  .heat-inner { min-width: 560px; }
-
-  /* ---------- posts table ---------- */
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th {
-    text-align: left; font-weight: 500; color: var(--muted); font-size: 12px;
-    padding: 0 12px 10px 0; border-bottom: 1px solid var(--hairline);
-  }
-  td {
-    padding: 11px 12px 11px 0; border-bottom: 1px solid var(--hairline);
-    font-variant-numeric: tabular-nums; color: var(--ink-2);
-  }
-  td.first { color: var(--ink); font-variant-numeric: normal; }
-  td a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--axis); }
-  td a:hover { color: var(--accent); border-color: var(--accent); }
-  .num { text-align: right; }
-
-  details { margin-top: 14px; }
+  /* ---------- disclosure ---------- */
+  details { margin-top: 18px; }
   summary {
-    color: var(--muted); cursor: pointer; font-size: 12.5px; list-style: none;
-    padding: 6px 0;
+    border-radius: 999px; color: var(--ink-2); cursor: pointer; display: inline-block;
+    font-size: 13px; list-style: none; padding: 8px 16px; background: rgba(var(--wash), .10);
+    transition: transform .16s cubic-bezier(.2,.9,.3,1.2), background .18s;
   }
   summary::-webkit-details-marker { display: none; }
-  summary:hover { color: var(--ink-2); }
-  summary::before { content: "＋  "; }
-  details[open] summary::before { content: "－  "; }
+  summary:hover { background: rgba(var(--wash), .18); transform: translateY(-1px); }
+  summary:active { transform: scale(.95); }
+  .heat { overflow-x: auto; padding-top: 18px; }
+  .heat-inner { min-width: 580px; }
 
-  .empty {
-    color: var(--muted); font-size: 13px; padding: 40px 0; text-align: center;
+  /* ---------- table ---------- */
+  table { border-collapse: separate; border-spacing: 0 6px; font-size: 13.5px; width: 100%; margin-top: 8px; }
+  th {
+    color: var(--muted); font-size: 11.5px; font-weight: 400; letter-spacing: .06em;
+    padding: 0 14px 6px 0; text-align: left; text-transform: uppercase;
   }
+  td { padding: 14px 14px 14px 0; transition: background .18s; }
+  tbody tr { background: rgba(var(--wash), .05); }
+  tbody tr:hover { background: rgba(var(--wash), .12); }
+  td:first-child { border-radius: 14px 0 0 14px; padding-left: 18px; }
+  td:last-child { border-radius: 0 14px 14px 0; padding-right: 18px; }
+  td.n { font-variant-numeric: tabular-nums; text-align: right; color: var(--ink-2); }
+  td a { color: var(--ink); text-decoration: none; }
+  td a:hover { color: var(--accent); }
+
+  .empty { color: var(--muted); font-size: 13.5px; padding: 46px 10px; text-align: center; }
   .banner {
-    background: var(--accent-wash); border: 1px solid var(--hairline);
-    border-radius: 10px; color: var(--ink-2); font-size: 13px;
-    margin-bottom: 32px; padding: 14px 16px;
+    background: rgba(var(--wash), .10); border-radius: 20px; color: var(--ink-2);
+    font-size: 13.5px; margin-bottom: 22px; padding: 16px 20px;
   }
-  .banner b { color: var(--ink); }
-  footer { color: var(--muted); font-size: 12px; padding-top: 20px; border-top: 1px solid var(--hairline); }
+  .banner b { color: var(--ink); font-weight: 500; }
+  footer { color: var(--muted); font-size: 12.5px; padding-top: 34px; text-align: center; }
+
+  /* ---------- motion ---------- */
+  @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  .rise { animation: rise .5s cubic-bezier(.2,.9,.3,1) backwards; }
+  @keyframes pulse {
+    0%,100% { opacity: .5; r: 5; }
+    50%     { opacity: 0;  r: 11; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
 </style>
 </head>
-<body>
+<body class="a-blue">
 <div class="wrap">
 
-  <header>
-    <h1>@jaredartt</h1>
-    <span class="updated" id="updated"></span>
+  <header class="rise">
+    <div class="mark">J</div>
+    <div>
+      <h1>@jaredartt</h1>
+      <div class="updated" id="updated"></div>
+    </div>
     <span class="spacer"></span>
-    <button class="theme-btn" id="theme" type="button">Theme</button>
+    <button class="btn" id="theme" type="button">Theme</button>
   </header>
 
   <div id="banner"></div>
 
-  <div class="hero">
+  <div class="hero rise" style="animation-delay:.05s">
     <div class="hero-label">Followers</div>
-    <div class="hero-value" id="hero">—</div>
+    <div class="hero-value display" id="hero">—</div>
     <div class="hero-sub" id="hero-sub"></div>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div class="stats stats-3" id="stats-net"></div>
+  <div class="stats stats-4" id="stats-more"></div>
 
-  <section>
-    <div class="panel-head">
-      <h2>Follower growth</h2>
+  <section class="block a-blue rise" style="animation-delay:.1s">
+    <div class="block-head">
+      <span class="dot"></span><h2>Follower growth</h2>
       <div class="ranges" id="ranges"></div>
     </div>
-    <p class="panel-note" id="growth-note">Every hour since tracking began. Instagram keeps 90 days; this keeps everything.</p>
-    <div class="card"><div class="chart" id="growth"></div></div>
+    <p class="note" id="growth-note">Every hour since tracking began. Instagram keeps 90 days; this keeps everything.</p>
+    <div class="chart" id="growth"></div>
   </section>
 
-  <section>
-    <div class="panel-head"><h2>Net change per day</h2></div>
-    <p class="insight" id="net-note"></p>
-    <div class="card"><div class="chart" id="netchange"></div></div>
+  <section class="block a-teal rise" style="animation-delay:.14s">
+    <div class="block-head"><span class="dot"></span><h2>Net change per day</h2></div>
+    <p class="note" id="net-note"></p>
+    <div class="chart" id="netchange"></div>
   </section>
 
-  <section>
-    <div class="panel-head"><h2>When you gain followers</h2></div>
-    <p class="insight" id="hour-insight"></p>
-    <div class="card"><div class="chart" id="byhour"></div></div>
-    <details>
+  <section class="block a-pink rise" style="animation-delay:.18s">
+    <div class="block-head"><span class="dot"></span><h2>When you gain followers</h2></div>
+    <p class="note" id="hour-insight"></p>
+    <div class="chart" id="byhour"></div>
+    <details id="heat-wrap" hidden>
       <summary>Show as a week grid</summary>
       <div class="heat"><div class="heat-inner"><div class="chart" id="heatmap"></div></div></div>
     </details>
   </section>
 
-  <section>
-    <div class="two-up">
-      <div>
-        <div class="panel-head"><h2>Reach</h2></div>
-        <p class="panel-note">Unique accounts that saw your work.</p>
-        <div class="card"><div class="chart" id="reach"></div></div>
-      </div>
-      <div>
-        <div class="panel-head"><h2>Profile views</h2></div>
-        <p class="panel-note">People who tapped through to look at you.</p>
-        <div class="card"><div class="chart" id="profileviews"></div></div>
-      </div>
-    </div>
-  </section>
+  <div class="two-up">
+    <section class="block a-orange rise" style="animation-delay:.22s">
+      <div class="block-head"><span class="dot"></span><h2>Reach</h2></div>
+      <p class="note">Unique accounts that saw your work.</p>
+      <div class="chart" id="reach"></div>
+    </section>
+    <section class="block a-violet rise" style="animation-delay:.26s">
+      <div class="block-head"><span class="dot"></span><h2>Profile views</h2></div>
+      <p class="note">People who tapped through to look at you.</p>
+      <div class="chart" id="profileviews"></div>
+    </section>
+  </div>
 
-  <section>
-    <div class="panel-head"><h2>Best posting times</h2></div>
-    <p class="insight" id="post-insight"></p>
-    <div class="card"><div class="chart" id="posthours"></div></div>
+  <section class="block a-violet rise" style="animation-delay:.3s; margin-top:24px">
+    <div class="block-head"><span class="dot"></span><h2>Best posting times</h2></div>
+    <p class="note" id="post-insight"></p>
+    <div class="chart" id="posthours"></div>
     <details>
       <summary>Show your posts</summary>
       <div id="posts-table"></div>
@@ -265,6 +347,7 @@
 //  Data loading
 // ===========================================================================
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function parseCsv(text) {
   // Tolerate CRLF — Excel and Numbers rewrite files that way, and a stray \r
@@ -273,8 +356,7 @@ function parseCsv(text) {
   if (!lines.length) return [];
   const head = splitRow(lines[0]);
   return lines.slice(1).map(l => {
-    const c = splitRow(l);
-    const o = {};
+    const c = splitRow(l); const o = {};
     head.forEach((h, i) => { o[h] = c[i] ?? ''; });
     return o;
   });
@@ -293,7 +375,6 @@ function splitRow(line) {
   }
   out.push(cur); return out;
 }
-
 const num = v => { const n = Number(v); return Number.isFinite(n) ? n : null; };
 
 async function load(path, parser) {
@@ -318,74 +399,78 @@ const compact = n => {
 };
 const signed = n => (n > 0 ? '+' : '') + fmt(n);
 const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-const fmtDate = d => new Date(d + 'T12:00:00Z')
-  .toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 const hourLabel = h => String(h).padStart(2, '0') + ':00';
 
-// Local-time parts of a UTC timestamp, in the viewer's own timezone.
 function localParts(iso) {
   const d = new Date(iso);
-  return {
-    date: d.toLocaleDateString('en-CA'),                 // YYYY-MM-DD, local
-    hour: d.getHours(),
-    weekday: (d.getDay() + 6) % 7,                       // 0 = Monday
+  return { date: d.toLocaleDateString('en-CA'), hour: d.getHours(), weekday: (d.getDay() + 6) % 7 };
+}
+
+/** Numbers that count up on arrival — but never a wrong number, even briefly. */
+function countUp(node, value, format = fmt) {
+  if (value === null || value === undefined) { node.textContent = '—'; return; }
+  if (REDUCED) { node.textContent = format(value); return; }
+  const dur = 620, t0 = performance.now(), from = 0;
+  const step = (t) => {
+    const p = Math.min(1, (t - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    node.textContent = format(Math.round(from + (value - from) * eased));
+    if (p < 1) requestAnimationFrame(step); else node.textContent = format(value);
   };
+  requestAnimationFrame(step);
 }
 
 // ===========================================================================
 //  Chart primitives — plain SVG, no libraries.
 // ===========================================================================
 const SVG = 'http://www.w3.org/2000/svg';
+let uid = 0;
 const el = (name, attrs = {}) => {
   const n = document.createElementNS(SVG, name);
   for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
   return n;
 };
+const css = (host, prop) => getComputedStyle(host).getPropertyValue(prop).trim();
 
 function mountTip(host) {
   let tip = host.querySelector('.tip');
   if (!tip) { tip = document.createElement('div'); tip.className = 'tip'; host.appendChild(tip); }
   return {
     show(x, y, label, value) {
-      tip.innerHTML = `<div class="t-label">${label}</div><div class="t-value">${value}</div>`;
-      tip.style.left = x + 'px';
-      tip.style.top = (y - 10) + 'px';
-      tip.style.opacity = '1';
+      tip.innerHTML = `<div class="t-label"></div><div class="t-value"></div>`;
+      tip.firstChild.textContent = label;
+      tip.lastChild.textContent = value;
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+      tip.classList.add('on');
     },
-    hide() { tip.style.opacity = '0'; },
+    hide() { tip.classList.remove('on'); },
   };
 }
 
-/** Re-render on resize so the chart is always drawn at true pixel size. */
 function responsive(host, draw) {
-  let raf;
+  let raf, lastW = -1;
   const run = () => {
     const w = host.clientWidth;
-    if (w > 0) draw(w);
+    if (w > 0 && w !== lastW) { lastW = w; draw(w); }
   };
-  new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(run); })
-    .observe(host);
+  new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(run); }).observe(host);
   run();
 }
 
-function niceTicks(min, max, count = 4) {
+function niceTicks(min, max, count = 3) {
   if (min === max) { min -= 1; max += 1; }
   const raw = (max - min) / count;
   const mag = Math.pow(10, Math.floor(Math.log10(raw)));
   const norm = raw / mag;
   const step = (norm >= 5 ? 10 : norm >= 2 ? 5 : norm >= 1 ? 2 : 1) * mag;
-  const lo = Math.floor(min / step) * step;
-  const hi = Math.ceil(max / step) * step;
   const out = [];
-  for (let v = lo; v <= hi + step / 2; v += step) out.push(Math.round(v * 1e6) / 1e6);
+  for (let v = Math.floor(min / step) * step; v <= Math.ceil(max / step) * step + step / 2; v += step)
+    out.push(Math.round(v * 1e6) / 1e6);
   return out;
 }
 
-/**
- * Pick a tick format from the step size, not the magnitude. Follower counts step
- * 200 at a time around 10,000 — compacting those gives "10K, 10K, 11K", three
- * labels that say nothing.
- */
+/** Tick format from step size, not magnitude: 10K/10K/11K says nothing. */
 function tickFmt(ticks) {
   const step = ticks.length > 1 ? Math.abs(ticks[1] - ticks[0]) : 1;
   if (step >= 1000) return compact;
@@ -394,116 +479,124 @@ function tickFmt(ticks) {
   return v => v.toFixed(dp);
 }
 
-function emptyState(host, message) {
-  host.innerHTML = `<div class="empty">${message}</div>`;
-}
+const emptyState = (host, msg) => { host.innerHTML = `<div class="empty">${msg}</div>`; };
 
 // --- line chart ------------------------------------------------------------
 function lineChart(host, points, opts = {}) {
-  if (!points || points.length < 2) {
+  if (!points || points.length < 2)
     return emptyState(host, opts.empty || 'Not enough data yet — this fills in as snapshots arrive.');
-  }
   const tip = mountTip(host);
 
   responsive(host, (W) => {
     const H = opts.height || 260;
-    const pad = { t: 14, r: 62, b: 26, l: 6 };
+    const pad = { t: 22, r: 58, b: 30, l: 4 };
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const accent = css(host, '--accent') || '#2b6bff';
+    const wash = css(host, '--wash') || '43,107,255';
 
     const ys = points.map(p => p.y);
-    const ticks = niceTicks(Math.min(...ys), Math.max(...ys), 4);
+    const ticks = niceTicks(Math.min(...ys), Math.max(...ys), 3);
     const y0 = ticks[0], y1 = ticks[ticks.length - 1];
     const label = tickFmt(ticks);
-
-    const X = i => pad.l + (points.length === 1 ? iw / 2 : (i / (points.length - 1)) * iw);
+    const X = i => pad.l + (i / (points.length - 1)) * iw;
     const Y = v => pad.t + ih - ((v - y0) / (y1 - y0)) * ih;
 
     const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img' });
+    const gid = `g${++uid}`;
+    const defs = el('defs');
+    const grad = el('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.appendChild(el('stop', { offset: '0%',   'stop-color': accent, 'stop-opacity': .28 }));
+    grad.appendChild(el('stop', { offset: '100%', 'stop-color': accent, 'stop-opacity': 0 }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
 
-    // gridlines + right-hand value axis
+    // Gridlines only where a value sits — three faint rules, no boxing frame.
     for (const t of ticks) {
       svg.appendChild(el('line', {
-        x1: pad.l, x2: pad.l + iw, y1: Y(t), y2: Y(t),
-        stroke: 'var(--grid)', 'stroke-width': 1,
+        x1: pad.l, x2: pad.l + iw, y1: Y(t), y2: Y(t), stroke: 'var(--grid)', 'stroke-width': 1,
       }));
       const lab = el('text', {
-        x: pad.l + iw + 8, y: Y(t) + 4, fill: 'var(--muted)',
-        'font-size': 11, 'font-variant-numeric': 'tabular-nums',
+        x: pad.l + iw + 10, y: Y(t) + 4, fill: 'var(--muted)', 'font-size': 11.5,
+        'font-family': 'Lexend, sans-serif', 'font-variant-numeric': 'tabular-nums',
       });
       lab.textContent = label(t);
       svg.appendChild(lab);
     }
 
-    const seg = (from, to) => points.slice(from, to + 1)
-      .map((p, i) => `${i ? 'L' : 'M'}${X(from + i).toFixed(2)},${Y(p.y).toFixed(2)}`).join(' ');
+    const seg = (a, b) => points.slice(a, b + 1)
+      .map((p, i) => `${i ? 'L' : 'M'}${X(a + i).toFixed(2)},${Y(p.y).toFixed(2)}`).join(' ');
     const d = seg(0, points.length - 1);
 
-    if (opts.area !== false) {
-      svg.appendChild(el('path', {
-        d: `${d} L${X(points.length - 1)},${pad.t + ih} L${X(0)},${pad.t + ih} Z`,
-        fill: 'var(--accent-wash)', stroke: 'none',
-      }));
-    }
+    svg.appendChild(el('path', {
+      d: `${d} L${X(points.length - 1)},${pad.t + ih} L${X(0)},${pad.t + ih} Z`,
+      fill: `url(#${gid})`,
+    }));
 
-    // Reconstructed history is drawn dashed, so an estimate never passes itself
-    // off as a measurement.
+    // Reconstructed history is dashed, so an estimate never poses as a measurement.
     let lastEst = -1;
     for (let i = 0; i < points.length; i++) if (points[i].est) lastEst = i;
 
-    if (lastEst >= 1) {
-      svg.appendChild(el('path', {
-        d: seg(0, lastEst), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2,
-        'stroke-linejoin': 'round', 'stroke-linecap': 'round',
-        'stroke-dasharray': '4 4', opacity: 0.75,
-      }));
-    }
-    svg.appendChild(el('path', {
-      d: seg(Math.max(0, lastEst), points.length - 1),
-      fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2,
-      'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+    const strokes = [];
+    if (lastEst >= 1) strokes.push(el('path', {
+      d: seg(0, lastEst), fill: 'none', stroke: accent, 'stroke-width': 2.5,
+      'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      'stroke-dasharray': '1 7', opacity: .55,
     }));
+    strokes.push(el('path', {
+      d: seg(Math.max(0, lastEst), points.length - 1), fill: 'none', stroke: accent,
+      'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      style: `filter: drop-shadow(0 4px 12px rgba(${wash},.45))`,
+    }));
+    strokes.forEach(s => svg.appendChild(s));
 
-    // x labels: first and last only — the axis is time, and two anchors are enough
+    // The solid line draws itself in.
+    const solid = strokes[strokes.length - 1];
+    if (!REDUCED && solid.getTotalLength) {
+      requestAnimationFrame(() => {
+        const len = solid.getTotalLength();
+        if (!len) return;
+        solid.style.strokeDasharray = len;
+        solid.style.strokeDashoffset = len;
+        solid.style.transition = 'stroke-dashoffset .9s cubic-bezier(.3,.8,.3,1)';
+        requestAnimationFrame(() => { solid.style.strokeDashoffset = '0'; });
+      });
+    }
+
     const xlab = (i, anchor) => {
       const t = el('text', {
-        x: X(i), y: H - 6, fill: 'var(--muted)', 'font-size': 11, 'text-anchor': anchor,
+        x: X(i), y: H - 6, fill: 'var(--muted)', 'font-size': 11.5,
+        'font-family': 'Lexend, sans-serif', 'text-anchor': anchor,
       });
       t.textContent = points[i].label;
       svg.appendChild(t);
     };
-    xlab(0, 'start');
-    xlab(points.length - 1, 'end');
+    xlab(0, 'start'); xlab(points.length - 1, 'end');
 
-    // end marker with a surface ring
-    const last = points[points.length - 1];
+    const lastP = points[points.length - 1];
+    const halo = el('circle', {
+      cx: X(points.length - 1), cy: Y(lastP.y), r: 5, fill: accent, opacity: .5,
+    });
+    if (!REDUCED) halo.style.animation = 'pulse 2.4s ease-out infinite';
+    svg.appendChild(halo);
     svg.appendChild(el('circle', {
-      cx: X(points.length - 1), cy: Y(last.y), r: 4,
-      fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2,
+      cx: X(points.length - 1), cy: Y(lastP.y), r: 5, fill: accent,
+      stroke: 'var(--page)', 'stroke-width': 3,
     }));
 
-    // crosshair
-    const cross = el('line', {
-      y1: pad.t, y2: pad.t + ih, stroke: 'var(--axis)', 'stroke-width': 1, opacity: 0,
-    });
-    const dot = el('circle', {
-      r: 4, fill: 'var(--accent)', stroke: 'var(--surface)', 'stroke-width': 2, opacity: 0,
-    });
+    const cross = el('line', { y1: pad.t - 6, y2: pad.t + ih, stroke: accent, 'stroke-width': 1.5, opacity: 0 });
+    const dot = el('circle', { r: 5.5, fill: accent, stroke: 'var(--page)', 'stroke-width': 3, opacity: 0 });
     svg.appendChild(cross); svg.appendChild(dot);
 
     const hit = el('rect', { x: 0, y: 0, width: W, height: H, fill: 'transparent' });
     hit.addEventListener('pointermove', ev => {
       const r = svg.getBoundingClientRect();
       const px = (ev.clientX - r.left) * (W / r.width);
-      const i = Math.max(0, Math.min(points.length - 1,
-        Math.round(((px - pad.l) / iw) * (points.length - 1))));
+      const i = Math.max(0, Math.min(points.length - 1, Math.round(((px - pad.l) / iw) * (points.length - 1))));
       const p = points[i];
-      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i));
-      cross.setAttribute('opacity', 1);
-      dot.setAttribute('cx', X(i)); dot.setAttribute('cy', Y(p.y));
-      dot.setAttribute('opacity', 1);
+      cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('opacity', .25);
+      dot.setAttribute('cx', X(i)); dot.setAttribute('cy', Y(p.y)); dot.setAttribute('opacity', 1);
       tip.show(X(i) * (r.width / W), Y(p.y) * (r.height / H),
-        (p.tipLabel || p.label) + (p.est ? ' · reconstructed' : ''),
-        (opts.unit || '') + fmt(p.y));
+        (p.tipLabel || p.label) + (p.est ? ' · reconstructed' : ''), (opts.unit || '') + fmt(p.y));
     });
     hit.addEventListener('pointerleave', () => {
       cross.setAttribute('opacity', 0); dot.setAttribute('opacity', 0); tip.hide();
@@ -517,36 +610,36 @@ function lineChart(host, points, opts = {}) {
 
 // --- column chart ----------------------------------------------------------
 function columnChart(host, bars, opts = {}) {
-  if (!bars || !bars.length) {
-    return emptyState(host, opts.empty || 'Nothing to show yet.');
-  }
+  if (!bars || !bars.length) return emptyState(host, opts.empty || 'Nothing to show yet.');
   const tip = mountTip(host);
 
   responsive(host, (W) => {
-    const H = opts.height || 220;
-    const pad = { t: 14, r: 62, b: 26, l: 6 };
+    const H = opts.height || 230;
+    const pad = { t: 20, r: 58, b: 30, l: 4 };
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const accent = css(host, '--accent') || '#2b6bff';
+    const gain = css(host, '--gain'), loss = css(host, '--loss');
 
     const vals = bars.map(b => b.value);
-    const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 4);
+    const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 3);
     const y0 = ticks[0], y1 = ticks[ticks.length - 1];
     const label = tickFmt(ticks);
     const Y = v => pad.t + ih - ((v - y0) / (y1 - y0)) * ih;
 
     const band = iw / bars.length;
-    const bw = Math.min(opts.maxBar || 24, Math.max(2, band - 2)); // 2px surface gap
-    const r = Math.min(4, bw / 2);
+    const bw = Math.min(opts.maxBar || 22, Math.max(3, band - 3));
+    const r = bw / 2;
 
     const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img' });
 
     for (const t of ticks) {
       svg.appendChild(el('line', {
         x1: pad.l, x2: pad.l + iw, y1: Y(t), y2: Y(t),
-        stroke: t === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+        stroke: 'var(--grid)', 'stroke-width': t === 0 ? 1.5 : 1,
       }));
       const lab = el('text', {
-        x: pad.l + iw + 8, y: Y(t) + 4, fill: 'var(--muted)',
-        'font-size': 11, 'font-variant-numeric': 'tabular-nums',
+        x: pad.l + iw + 10, y: Y(t) + 4, fill: 'var(--muted)', 'font-size': 11.5,
+        'font-family': 'Lexend, sans-serif', 'font-variant-numeric': 'tabular-nums',
       });
       lab.textContent = label(t);
       svg.appendChild(lab);
@@ -558,35 +651,41 @@ function columnChart(host, bars, opts = {}) {
       const y = Y(b.value);
       const h = Math.abs(y - base);
       const up = b.value >= 0;
-      const color = b.color || (up ? 'var(--accent)' : 'var(--down)');
-      // rounded at the data end, square at the baseline
+      // Direction is carried by position AND colour, so the teal/coral pair is
+      // never the only thing telling gains from losses.
+      const color = b.color || (opts.diverging ? (up ? gain : loss) : accent);
+      const rr = Math.min(r, h);
       const top = up ? y : base;
       const path = up
-        ? `M${cx - bw / 2},${base} L${cx - bw / 2},${top + r} Q${cx - bw / 2},${top} ${cx - bw / 2 + r},${top} L${cx + bw / 2 - r},${top} Q${cx + bw / 2},${top} ${cx + bw / 2},${top + r} L${cx + bw / 2},${base} Z`
-        : `M${cx - bw / 2},${base} L${cx - bw / 2},${base + h - r} Q${cx - bw / 2},${base + h} ${cx - bw / 2 + r},${base + h} L${cx + bw / 2 - r},${base + h} Q${cx + bw / 2},${base + h} ${cx + bw / 2},${base + h - r} L${cx + bw / 2},${base} Z`;
+        ? `M${cx - r},${base} L${cx - r},${top + rr} Q${cx - r},${top} ${cx - r + rr},${top} L${cx + r - rr},${top} Q${cx + r},${top} ${cx + r},${top + rr} L${cx + r},${base} Z`
+        : `M${cx - r},${base} L${cx - r},${base + h - rr} Q${cx - r},${base + h} ${cx - r + rr},${base + h} L${cx + r - rr},${base + h} Q${cx + r},${base + h} ${cx + r},${base + h - rr} L${cx + r},${base} Z`;
 
-      const rect = el('path', { d: h < 0.5 ? `M${cx - bw / 2},${base} h${bw}` : path, fill: color });
-      svg.appendChild(rect);
+      const mark = el('path', { d: h < 0.6 ? `M${cx - r},${base} h${bw}` : path, fill: color });
+      mark.style.transition = 'opacity .16s';
+      svg.appendChild(mark);
 
-      const hit = el('rect', {
-        x: pad.l + band * i, y: pad.t, width: band, height: ih, fill: 'transparent',
-      });
+      if (!REDUCED) {
+        mark.style.transformOrigin = `${cx}px ${base}px`;
+        mark.style.animation = `grow .5s cubic-bezier(.2,.9,.3,1.1) ${Math.min(i * 8, 400)}ms backwards`;
+      }
+
+      const hit = el('rect', { x: pad.l + band * i, y: pad.t, width: band, height: ih, fill: 'transparent' });
       hit.addEventListener('pointerenter', () => {
         const rc = svg.getBoundingClientRect();
+        mark.style.opacity = '.6';
         tip.show(cx * (rc.width / W), Math.min(y, base) * (rc.height / H),
           b.label, (opts.signed ? signed(b.value) : fmt(b.value)) + (opts.unit || ''));
       });
-      hit.addEventListener('pointerleave', () => tip.hide());
+      hit.addEventListener('pointerleave', () => { mark.style.opacity = '1'; tip.hide(); });
       svg.appendChild(hit);
     });
 
-    // sparse x labels so they never collide
     const every = Math.max(1, Math.ceil(bars.length / (W < 520 ? 5 : 9)));
     bars.forEach((b, i) => {
       if (i % every !== 0 && i !== bars.length - 1) return;
       const t = el('text', {
-        x: pad.l + band * i + band / 2, y: H - 6,
-        fill: 'var(--muted)', 'font-size': 11, 'text-anchor': 'middle',
+        x: pad.l + band * i + band / 2, y: H - 6, fill: 'var(--muted)',
+        'font-size': 11.5, 'font-family': 'Lexend, sans-serif', 'text-anchor': 'middle',
       });
       t.textContent = b.short ?? b.label;
       svg.appendChild(t);
@@ -598,68 +697,60 @@ function columnChart(host, bars, opts = {}) {
 }
 
 // --- heatmap ---------------------------------------------------------------
-function heatmap(host, cells, opts = {}) {
+function heatmap(host, cells) {
   const vals = cells.filter(c => c.value !== null).map(c => c.value);
   if (!vals.length) return emptyState(host, 'Needs about two weeks of hourly snapshots.');
   const tip = mountTip(host);
   const max = Math.max(...vals, 0.0001);
-
-  // Diverging, because this data genuinely has two signs: hours you gain
-  // followers and hours you lose them. Gains run up the blue ramp; losses get
-  // red; a flat hour stays neutral so "nothing happened" never looks like growth.
-  const ramp = ['var(--s100)','var(--s200)','var(--s300)','var(--s400)','var(--s500)','var(--s600)','var(--s700)'];
-  const lossRamp = ['var(--l100)', 'var(--l300)'];
-  const minV = Math.min(...vals, 0);
-  const colorFor = v => {
-    if (v === null) return 'transparent';
-    if (v === 0) return 'var(--grid)';
-    if (v < 0) return lossRamp[minV < -0.0001 && v / minV > 0.5 ? 1 : 0];
-    return ramp[Math.min(ramp.length - 1, Math.floor((v / max) * ramp.length))];
-  };
+  const min = Math.min(...vals, 0);
 
   responsive(host, (W) => {
-    const left = 34, top = 18, gap = 2;
-    const cw = (W - left) / 24;
-    const ch = 26;
-    const H = top + ch * 7 + 6;
+    const gain = css(host, '--gain'), loss = css(host, '--loss');
+    const left = 38, top = 22, gap = 3;
+    const cw = (W - left) / 24, ch = 28;
+    const H = top + ch * 7 + 8;
     const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img' });
 
     for (let h = 0; h < 24; h += 3) {
       const t = el('text', {
-        x: left + cw * h + cw / 2, y: 11, fill: 'var(--muted)',
-        'font-size': 10.5, 'text-anchor': 'middle',
+        x: left + cw * h + cw / 2, y: 12, fill: 'var(--muted)', 'font-size': 10.5,
+        'font-family': 'Lexend, sans-serif', 'text-anchor': 'middle',
       });
       t.textContent = String(h).padStart(2, '0');
       svg.appendChild(t);
     }
     for (let d = 0; d < 7; d++) {
       const t = el('text', {
-        x: 0, y: top + ch * d + ch / 2 + 3.5, fill: 'var(--muted)', 'font-size': 10.5,
+        x: 0, y: top + ch * d + ch / 2 + 4, fill: 'var(--muted)',
+        'font-size': 10.5, 'font-family': 'Lexend, sans-serif',
       });
       t.textContent = dayName[d];
       svg.appendChild(t);
     }
 
-    for (const c of cells) {
+    cells.forEach((c, idx) => {
       const x = left + cw * c.hour, y = top + ch * c.weekday;
+      let fill = 'var(--grid)', op = 1;
+      if (c.value === null) { fill = 'var(--grid)'; op = .35; }
+      else if (c.value > 0) { fill = gain; op = .18 + .82 * (c.value / max); }
+      else if (c.value < 0) { fill = loss; op = .18 + .82 * (min ? c.value / min : 0); }
+
       const rect = el('rect', {
-        x: x + gap / 2, y: y + gap / 2,
-        width: Math.max(1, cw - gap), height: ch - gap,
-        rx: 3, fill: colorFor(c.value),
+        x: x + gap / 2, y: y + gap / 2, width: Math.max(1, cw - gap), height: ch - gap,
+        rx: 8, fill, opacity: op,
       });
-      if (c.value === null) {
-        rect.setAttribute('stroke', 'var(--grid)');
-        rect.setAttribute('stroke-width', 1);
-      }
+      rect.style.transition = 'transform .18s cubic-bezier(.2,.9,.3,1.4)';
+      rect.style.transformOrigin = `${x + cw / 2}px ${y + ch / 2}px`;
       rect.addEventListener('pointerenter', () => {
+        rect.style.transform = 'scale(1.16)';
         const rc = svg.getBoundingClientRect();
         tip.show((x + cw / 2) * (rc.width / W), y * (rc.height / H),
           `${dayName[c.weekday]} ${hourLabel(c.hour)}`,
           c.value === null ? 'no data' : signed(Math.round(c.value * 10) / 10) + ' avg');
       });
-      rect.addEventListener('pointerleave', () => tip.hide());
+      rect.addEventListener('pointerleave', () => { rect.style.transform = ''; tip.hide(); });
       svg.appendChild(rect);
-    }
+    });
 
     host.querySelectorAll('svg').forEach(s => s.remove());
     host.prepend(svg);
@@ -675,8 +766,6 @@ function heatmap(host, cells, opts = {}) {
   let media     = await load('data/media.json', JSON.parse);
   let demo = false;
 
-  // One snapshot plus Instagram's daily history is plenty — the curve gets
-  // reconstructed below. Only fall back to samples when there's nothing at all.
   const hasReal = (followers && followers.length >= 1 && insights && insights.length >= 2)
     || (followers && followers.length >= 2);
 
@@ -684,13 +773,11 @@ function heatmap(host, cells, opts = {}) {
     ({ followers, insights, media } = demoData());
     demo = true;
     document.getElementById('banner').innerHTML =
-      `<div class="banner"><b>Showing sample data.</b> This is what the dashboard looks like once
-       it has been collecting for a few months. Real numbers replace it as soon as the first
-       workflow run finishes.</div>`;
+      `<div class="banner"><b>Showing sample data.</b> Real numbers replace this as soon as the
+       first workflow run finishes.</div>`;
   }
 
-  followers = followers
-    .filter(r => num(r.followers) !== null)
+  followers = followers.filter(r => num(r.followers) !== null)
     .sort((a, b) => a.ts_utc.localeCompare(b.ts_utc));
 
   const ins = (insights || []).slice().sort((a, b) => a.date.localeCompare(b.date));
@@ -703,40 +790,29 @@ function heatmap(host, cells, opts = {}) {
     if (f !== null || u !== null) netByDate.set(r.date, (f || 0) - (u || 0));
   }
 
-  // ---- daily series (last reading of each local day) ----------------------
   const dailyMap = new Map();
-  for (const r of followers) {
-    const { date } = localParts(r.ts_utc);
-    dailyMap.set(date, num(r.followers));
-  }
+  for (const r of followers) dailyMap.set(localParts(r.ts_utc).date, num(r.followers));
 
-  // Hourly snapshots only start the day tracking began. But today's count plus
-  // Instagram's daily follows and unfollows reconstructs the curve backwards —
-  // so the chart opens with real history instead of a single point. These are
-  // drawn dashed and labelled as reconstructed.
+  // Hourly snapshots only start the day tracking began. Today's count plus the
+  // daily follows and unfollows reconstructs the curve backwards, so the chart
+  // opens with real history. Those points are drawn dashed and labelled.
   const estimated = new Set();
   const dayBefore = (d) => {
-    const t = new Date(d + 'T12:00:00Z');
-    t.setUTCDate(t.getUTCDate() - 1);
+    const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() - 1);
     return t.toISOString().slice(0, 10);
   };
-
   const measuredDates = [...dailyMap.keys()].sort();
   if (measuredDates.length && ins.length) {
     const earliest = ins[0].date;
-    let d = measuredDates[0];
-    let cur = dailyMap.get(d);
-    let guard = 0;
+    let d = measuredDates[0], cur = dailyMap.get(d), guard = 0;
     while (d > earliest && guard++ < 400) {
       cur -= netByDate.get(d) ?? 0;
       d = dayBefore(d);
-      dailyMap.set(d, cur);
-      estimated.add(d);
+      dailyMap.set(d, cur); estimated.add(d);
     }
   }
 
   const daily = [...dailyMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-
   const current = daily.length ? daily[daily.length - 1][1] : null;
   const at = back => {
     if (daily.length < 2) return null;
@@ -744,49 +820,68 @@ function heatmap(host, cells, opts = {}) {
     return i >= 0 ? daily[i][1] : daily[0][1];
   };
 
-  document.getElementById('hero').textContent = fmt(current);
+  countUp(document.getElementById('hero'), current);
+
+  // ---- last 24 hours, straight from the hourly snapshots ------------------
+  let d24 = null;
+  if (followers.length >= 2) {
+    const lastTs = Date.parse(followers[followers.length - 1].ts_utc);
+    const target = lastTs - 24 * 3600 * 1000;
+    let ref = null;
+    for (const r of followers) if (Date.parse(r.ts_utc) <= target) ref = r;
+    if (ref) d24 = num(followers[followers.length - 1].followers) - num(ref.followers);
+  }
+
+  const d7 = current !== null && at(7) !== null ? current - at(7) : null;
   const d30 = current !== null && at(30) !== null ? current - at(30) : null;
-  document.getElementById('hero-sub').innerHTML = d30 === null ? '' :
-    `<span class="${d30 >= 0 ? 'up' : 'down'}">${signed(d30)}</span> in the last 30 days`;
+
+  document.getElementById('hero-sub').innerHTML = d30 === null ? ''
+    : `<span class="${d30 >= 0 ? 'up' : 'down'}">${signed(d30)}</span> over the last 30 days`;
 
   document.getElementById('updated').textContent = followers.length
     ? 'updated ' + new Date(followers[followers.length - 1].ts_utc)
         .toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
     : '';
 
-  // ---- stat row ----------------------------------------------------------
+  // ---- stat tiles ---------------------------------------------------------
   const sumLast = (rows, key, n) => {
     const v = rows.slice(-n).map(r => num(r[key])).filter(x => x !== null);
     return v.length ? v.reduce((a, b) => a + b, 0) : null;
   };
-  const d7 = current !== null && at(7) !== null ? current - at(7) : null;
-  const stats = [
-    { label: 'Last 7 days',  value: signed(d7 ?? 0), cls: (d7 ?? 0) >= 0 ? 'up' : 'down', sub: 'net followers' },
-    { label: 'Last 30 days', value: signed(d30 ?? 0), cls: (d30 ?? 0) >= 0 ? 'up' : 'down', sub: 'net followers' },
-    { label: 'Follows', value: compact(sumLast(ins, 'follows', 30)), sub: 'gained, last 30 days' },
-    { label: 'Unfollows', value: compact(sumLast(ins, 'unfollows', 30)), sub: 'lost, last 30 days' },
-    { label: 'Reach', value: compact(sumLast(ins, 'reach', 30)), sub: 'last 30 days' },
-    { label: 'Profile views', value: compact(sumLast(ins, 'profile_views', 30)), sub: 'last 30 days' },
+
+  const delta = (v) => v === null ? '—' : signed(v);
+  const dcls = (v) => v === null ? 'pending' : (v >= 0 ? 'up' : 'down');
+
+  const netTiles = [
+    { a: 'a-teal',   label: 'Last 24 hours', value: delta(d24), cls: dcls(d24),
+      sub: d24 === null ? 'needs a day of readings' : 'net followers' },
+    { a: 'a-blue',   label: 'Last 7 days',   value: delta(d7),  cls: dcls(d7),  sub: 'net followers' },
+    { a: 'a-violet', label: 'Last 30 days',  value: delta(d30), cls: dcls(d30), sub: 'net followers' },
   ];
-  document.getElementById('stats').innerHTML = stats.map(s => `
-    <div class="stat">
+  const moreTiles = [
+    { a: 'a-teal',   label: 'Follows',       value: compact(sumLast(ins, 'follows', 30)),       sub: 'gained, last 30 days' },
+    { a: 'a-loss',   label: 'Unfollows',     value: compact(sumLast(ins, 'unfollows', 7)),      sub: 'lost, last 7 days' },
+    { a: 'a-orange', label: 'Reach',         value: compact(sumLast(ins, 'reach', 30)),         sub: 'last 30 days' },
+    { a: 'a-pink',   label: 'Profile views', value: compact(sumLast(ins, 'profile_views', 30)), sub: 'last 30 days' },
+  ];
+  const tile = (s, i) => `
+    <div class="stat ${s.a} rise" style="animation-delay:${.06 + i * .04}s">
       <div class="stat-label">${s.label}</div>
       <div class="stat-value ${s.cls || ''}">${s.value}</div>
-      <div class="stat-delta">${s.sub}</div>
-    </div>`).join('');
+      <div class="stat-sub">${s.sub}</div>
+    </div>`;
+  document.getElementById('stats-net').innerHTML = netTiles.map(tile).join('');
+  document.getElementById('stats-more').innerHTML = moreTiles.map((s, i) => tile(s, i + 3)).join('');
 
-  // ---- growth chart with range filter ------------------------------------
+  // ---- growth chart -------------------------------------------------------
   const rangesEl = document.getElementById('ranges');
   const growthEl = document.getElementById('growth');
-  const RANGES = [
-    { label: '7d', days: 7 }, { label: '30d', days: 30 },
-    { label: '90d', days: 90 }, { label: 'All', days: Infinity },
-  ];
+  const RANGES = [{ label: '7d', days: 7 }, { label: '30d', days: 30 },
+                  { label: '90d', days: 90 }, { label: 'All', days: Infinity }];
   let active = daily.length > 60 ? 1 : 3;
 
   const drawGrowth = () => {
     const days = RANGES[active].days;
-    // Below ~4 days, show the hourly detail; above it, one point per day.
     const useHourly = days <= 7 && followers.length > 24;
     let points;
     if (useHourly) {
@@ -801,19 +896,17 @@ function heatmap(host, cells, opts = {}) {
       });
     } else {
       const slice = days === Infinity ? daily : daily.slice(-days);
-      points = slice.map(([date, y]) => ({
-        y, label: fmtDate(date), tipLabel: fmtDate(date), est: estimated.has(date),
-      }));
+      points = slice.map(([date, y]) => ({ y, label: fmtDate(date), tipLabel: fmtDate(date), est: estimated.has(date) }));
     }
     growthEl.innerHTML = '';
-    lineChart(growthEl, points, { height: 280 });
+    lineChart(growthEl, points, { height: 300 });
   };
 
   if (estimated.size) {
     document.getElementById('growth-note').textContent =
-      `Solid where measured hourly. Dashed before ${fmtDate(measuredDates[0])} — ` +
-      `reconstructed by working today's count backwards through Instagram's daily ` +
-      `follow and unfollow figures. From here on, every point is measured.`;
+      `Solid where measured hourly. Dotted before ${fmtDate(measuredDates[0])} — reconstructed by ` +
+      `working today's count backwards through Instagram's daily follow and unfollow figures. ` +
+      `From here on, every point is measured.`;
   }
 
   rangesEl.innerHTML = RANGES.map((r, i) =>
@@ -821,49 +914,39 @@ function heatmap(host, cells, opts = {}) {
   rangesEl.addEventListener('click', ev => {
     const b = ev.target.closest('button'); if (!b) return;
     active = Number(b.dataset.i);
-    rangesEl.querySelectorAll('button').forEach((x, i) =>
-      x.setAttribute('aria-pressed', String(i === active)));
+    rangesEl.querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', String(i === active)));
     drawGrowth();
   });
   drawGrowth();
 
-  // ---- net change per day ------------------------------------------------
-  // Prefer Instagram's own follows/unfollows over differencing snapshots.
+  // ---- net change per day -------------------------------------------------
   let netBars;
   if (netByDate.size) {
-    netBars = [...netByDate.entries()].sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([date, value]) => {
-        const r = ins.find((x) => x.date === date) || {};
-        return {
-          label: `${fmtDate(date)} · +${num(r.follows) ?? 0} / −${num(r.unfollows) ?? 0}`,
-          short: fmtDate(date),
-          value,
-        };
-      });
+    netBars = [...netByDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, value]) => {
+      const r = ins.find(x => x.date === date) || {};
+      return {
+        label: `${fmtDate(date)} · +${num(r.follows) ?? 0} / −${num(r.unfollows) ?? 0}`,
+        short: fmtDate(date), value,
+      };
+    });
   } else {
     netBars = [];
-    for (let i = 1; i < daily.length; i++) {
-      netBars.push({
-        label: fmtDate(daily[i][0]), short: fmtDate(daily[i][0]),
-        value: daily[i][1] - daily[i - 1][1],
-      });
-    }
+    for (let i = 1; i < daily.length; i++)
+      netBars.push({ label: fmtDate(daily[i][0]), short: fmtDate(daily[i][0]), value: daily[i][1] - daily[i - 1][1] });
   }
-  columnChart(document.getElementById('netchange'), netBars.slice(-60), { signed: true, height: 220 });
+  columnChart(document.getElementById('netchange'), netBars.slice(-60),
+    { signed: true, height: 240, diverging: true });
 
   const totF = ins.reduce((s, r) => s + (num(r.follows) || 0), 0);
   const totU = ins.reduce((s, r) => s + (num(r.unfollows) || 0), 0);
   if (netByDate.size) {
     document.getElementById('net-note').innerHTML =
       `Across ${netByDate.size} days Instagram recorded <b>${fmt(totF)}</b> follows and
-       <b>${fmt(totU)}</b> unfollows — a net of
-       <b>${signed(totF - totU)}</b>. These are Instagram's own daily figures, not
-       a guess from counting followers twice.`;
+       <b>${fmt(totU)}</b> unfollows — a net of <b>${signed(totF - totU)}</b>. These are
+       Instagram's own daily figures, not a guess from counting followers twice.`;
   }
 
-  // ---- hour of day -------------------------------------------------------
-  // Difference between consecutive hourly snapshots, attributed to the hour
-  // that just finished, in your local time.
+  // ---- hour of day --------------------------------------------------------
   const hourSum = Array(24).fill(0), hourN = Array(24).fill(0);
   const grid = Array.from({ length: 7 }, () => Array(24).fill(null));
   const gridN = Array.from({ length: 7 }, () => Array(24).fill(0));
@@ -871,7 +954,7 @@ function heatmap(host, cells, opts = {}) {
   for (let i = 1; i < followers.length; i++) {
     const prev = followers[i - 1], curr = followers[i];
     const gapH = (Date.parse(curr.ts_utc) - Date.parse(prev.ts_utc)) / 3600000;
-    if (gapH < 0.5 || gapH > 1.5) continue;          // only clean hour-to-hour steps
+    if (gapH < 0.5 || gapH > 1.5) continue;
     const delta = num(curr.followers) - num(prev.followers);
     if (delta === null || !Number.isFinite(delta)) continue;
     const { hour, weekday } = localParts(curr.ts_utc);
@@ -885,38 +968,35 @@ function heatmap(host, cells, opts = {}) {
     label: hourLabel(h), short: String(h).padStart(2, '0'),
     value: v === null ? 0 : Math.round(v * 100) / 100,
   }));
-  // An axis with 24 flat bars looks broken; say what's actually happening.
-  columnChart(document.getElementById('byhour'),
-    hourAvg.some((v) => v !== null) ? hourBars : null,
-    { signed: true, height: 220, maxBar: 22,
+  columnChart(document.getElementById('byhour'), hourAvg.some(v => v !== null) ? hourBars : null,
+    { signed: true, height: 230, maxBar: 20, diverging: true,
       empty: 'Nothing here yet — this panel needs a couple of weeks of hourly readings before the pattern means anything.' });
 
-  const ranked = hourAvg.map((v, h) => ({ h, v })).filter(x => x.v !== null && x.v > 0)
-    .sort((a, b) => b.v - a.v);
+  const ranked = hourAvg.map((v, h) => ({ h, v })).filter(x => x.v !== null && x.v > 0).sort((a, b) => b.v - a.v);
   const hoursTracked = hourN.reduce((a, b) => a + b, 0);
   document.getElementById('hour-insight').innerHTML = ranked.length >= 3
     ? `Averaged across ${hoursTracked.toLocaleString()} hourly readings, your strongest hours are
-       <b>${hourLabel(ranked[0].h)}</b>, <b>${hourLabel(ranked[1].h)}</b> and
-       <b>${hourLabel(ranked[2].h)}</b> — local time. This is the one number no analytics
-       subscription will show you, because it only exists if something looks every hour.`
-    : `Building up. Each hourly snapshot adds a reading; the pattern becomes trustworthy after
-       about two weeks.`;
+       <b>${hourLabel(ranked[0].h)}</b>, <b>${hourLabel(ranked[1].h)}</b> and <b>${hourLabel(ranked[2].h)}</b>
+       — local time. This is the one number no analytics subscription will show you, because it only
+       exists if something looks every hour.`
+    : `Building up. Each hourly snapshot adds a reading; the pattern becomes trustworthy after about two weeks.`;
 
-  heatmap(document.getElementById('heatmap'),
-    grid.flatMap((row, weekday) => row.map((v, hour) => ({
-      weekday, hour, value: gridN[weekday][hour] ? v / gridN[weekday][hour] : null,
-    }))));
+  // Only offer the week grid once there is something in it to look at.
+  if (gridN.some(row => row.some(n => n > 0))) {
+    document.getElementById('heat-wrap').hidden = false;
+    heatmap(document.getElementById('heatmap'),
+      grid.flatMap((row, weekday) => row.map((v, hour) => ({
+        weekday, hour, value: gridN[weekday][hour] ? v / gridN[weekday][hour] : null,
+      }))));
+  }
 
   // ---- reach & profile views ---------------------------------------------
-  const insSeries = key => ins
-    .map(r => ({ y: num(r[key]), label: fmtDate(r.date), tipLabel: fmtDate(r.date) }))
-    .filter(p => p.y !== null)
-    .slice(-90);
-
+  const insSeries = key => ins.map(r => ({ y: num(r[key]), label: fmtDate(r.date), tipLabel: fmtDate(r.date) }))
+    .filter(p => p.y !== null).slice(-90);
   lineChart(document.getElementById('reach'), insSeries('reach'),
-    { height: 200, empty: 'Waiting for the first daily run.' });
+    { height: 210, empty: 'Waiting for the first daily run.' });
   lineChart(document.getElementById('profileviews'), insSeries('profile_views'),
-    { height: 200, empty: 'Waiting for the first daily run.' });
+    { height: 210, empty: 'Waiting for the first daily run.' });
 
   // ---- best posting times -------------------------------------------------
   const posts = (media || []).map(m => {
@@ -936,11 +1016,9 @@ function heatmap(host, cells, opts = {}) {
   };
   const postBars = byHour.map((vals, h) => ({
     label: `${hourLabel(h)} · ${vals.length} post${vals.length === 1 ? '' : 's'}`,
-    short: String(h).padStart(2, '0'),
-    value: Math.round(median(vals) ?? 0),
+    short: String(h).padStart(2, '0'), value: Math.round(median(vals) ?? 0),
   }));
-  columnChart(document.getElementById('posthours'), postBars,
-    { height: 220, maxBar: 22, unit: '' });
+  columnChart(document.getElementById('posthours'), postBars, { height: 230, maxBar: 20 });
 
   const best = postBars.map((b, h) => ({ h, v: b.value, n: byHour[h].length }))
     .filter(x => x.n >= 2).sort((a, b) => b.v - a.v);
@@ -954,19 +1032,15 @@ function heatmap(host, cells, opts = {}) {
   const top = [...posts].sort((a, b) => b.interactions - a.interactions).slice(0, 12);
   document.getElementById('posts-table').innerHTML = top.length ? `
     <table>
-      <thead><tr>
-        <th>Posted</th><th>Caption</th>
-        <th class="num">Reach</th><th class="num">Interactions</th>
-      </tr></thead>
+      <thead><tr><th>Posted</th><th>Caption</th><th class="n">Reach</th><th class="n">Interactions</th></tr></thead>
       <tbody>${top.map(p => `
         <tr>
-          <td class="first">${new Date(p.timestamp).toLocaleDateString('en-GB',
-            { day: 'numeric', month: 'short', year: '2-digit' })} · ${hourLabel(p.hour)}</td>
-          <td class="first">${p.permalink
+          <td>${new Date(p.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })} · ${hourLabel(p.hour)}</td>
+          <td>${p.permalink
             ? `<a href="${p.permalink}" target="_blank" rel="noopener">${escapeHtml(p.caption) || 'View post'}</a>`
             : escapeHtml(p.caption)}</td>
-          <td class="num">${compact(p.reach)}</td>
-          <td class="num">${fmt(p.interactions)}</td>
+          <td class="n">${compact(p.reach)}</td>
+          <td class="n">${fmt(p.interactions)}</td>
         </tr>`).join('')}</tbody>
     </table>` : '<div class="empty">No posts recorded yet.</div>';
 
@@ -976,9 +1050,13 @@ function heatmap(host, cells, opts = {}) {
 })();
 
 function escapeHtml(s) {
-  return String(s || '').replace(/[&<>"]/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  return String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
+
+// bar grow keyframe (declared here so the CSS block stays about looks)
+const sheet = document.createElement('style');
+sheet.textContent = '@keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }';
+document.head.appendChild(sheet);
 
 // ---- theme toggle ---------------------------------------------------------
 (function theme() {
@@ -995,6 +1073,8 @@ function escapeHtml(s) {
     const order = [null, 'light', 'dark'];
     const next = order[(order.indexOf(get()) + 1) % 3];
     set(next); apply(next);
+    document.querySelectorAll('.chart').forEach(c => c.dispatchEvent(new Event('themechange')));
+    window.dispatchEvent(new Event('resize'));
   });
 })();
 
@@ -1006,14 +1086,12 @@ function demoData() {
   const hours = 24 * 120;
   let f = 8420;
   const now = Date.now();
-  // A plausible daily rhythm: quiet mornings, a strong evening, a late-night tail.
   const shape = h => [0.4,0.3,0.2,0.15,0.1,0.15,0.3,0.5,0.7,0.8,0.85,0.9,
                       1.0,1.0,0.95,0.9,1.05,1.2,1.5,1.9,2.2,1.8,1.1,0.7][h];
   for (let i = hours; i >= 0; i--) {
     const t = new Date(now - i * 3600000);
     const h = t.getHours();
-    const trend = 1 + (hours - i) / hours * 0.6;
-    const gain = shape(h) * trend * (0.6 + Math.random() * 0.9) - 0.35;
+    const gain = shape(h) * (1 + (hours - i) / hours * 0.6) * (0.6 + Math.random() * 0.9) - 0.35;
     f += gain;
     followers.push({
       ts_utc: new Date(t.setMinutes(0, 0, 0)).toISOString().slice(0, 13) + ':00:00Z',
@@ -1025,36 +1103,26 @@ function demoData() {
     const d = new Date(now - i * 86400000);
     const base = 2600 + (89 - i) * 22;
     const wk = [1, 1.05, 1.1, 1.15, 1.3, 1.4, 1.2][(d.getDay() + 6) % 7];
-    const spike = Math.random() < 0.06 ? 3.2 : 1;
-    const reach = Math.round(base * wk * spike * (0.8 + Math.random() * 0.5));
+    const reach = Math.round(base * wk * (Math.random() < 0.06 ? 3.2 : 1) * (0.8 + Math.random() * 0.5));
     insights.push({
-      date: d.toLocaleDateString('en-CA'),
-      reach: String(reach),
-      views: String(Math.round(reach * 1.7)),
+      date: d.toLocaleDateString('en-CA'), reach: String(reach), views: String(Math.round(reach * 1.7)),
       profile_views: String(Math.round(reach * 0.075 * (0.7 + Math.random() * 0.8))),
-      accounts_engaged: String(Math.round(reach * 0.11)),
-      total_interactions: String(Math.round(reach * 0.14)),
-      follows: String(Math.round(reach * 0.012)),
-      unfollows: String(Math.round(reach * 0.003)),
+      accounts_engaged: String(Math.round(reach * 0.11)), total_interactions: String(Math.round(reach * 0.14)),
+      follows: String(Math.round(reach * 0.012)), unfollows: String(Math.round(reach * 0.006)),
     });
   }
-  const captions = [
-    'Study in oil, late afternoon light', 'New series — first piece', 'Detail from the large canvas',
-    'Process shot, layer three', 'Finished after four months', 'Sketchbook page',
-    'Commission, private collection', 'Studio at 6am', 'Colour tests', 'Framed and ready',
-    'Work in progress', 'Charcoal, A2',
-  ];
+  const captions = ['Study in oil, late afternoon light','New series — first piece','Detail from the large canvas',
+    'Process shot, layer three','Finished after four months','Sketchbook page','Commission, private collection',
+    'Studio at 6am','Colour tests','Framed and ready','Work in progress','Charcoal, A2'];
   const media = [];
   for (let i = 0; i < 60; i++) {
     const d = new Date(now - (i * 2.1 + Math.random() * 2) * 86400000);
-    d.setHours([9, 11, 13, 17, 18, 19, 20, 21, 22][Math.floor(Math.random() * 9)],
-      Math.floor(Math.random() * 60), 0, 0);
-    const hourBoost = shape(d.getHours());
-    const reach = Math.round(2400 * hourBoost * (0.6 + Math.random() * 1.1));
+    d.setHours([9,11,13,17,18,19,20,21,22][Math.floor(Math.random() * 9)], Math.floor(Math.random() * 60), 0, 0);
+    const reach = Math.round(2400 * shape(d.getHours()) * (0.6 + Math.random() * 1.1));
     media.push({
-      id: 'demo' + i, timestamp: d.toISOString(), media_type: 'FEED',
-      permalink: '', caption: captions[i % captions.length],
-      like_count: Math.round(reach * 0.11), comments_count: Math.round(reach * 0.008),
+      id: 'demo' + i, timestamp: d.toISOString(), media_type: 'FEED', permalink: '',
+      caption: captions[i % captions.length], like_count: Math.round(reach * 0.11),
+      comments_count: Math.round(reach * 0.008),
       insights: { reach, saved: Math.round(reach * 0.02), shares: Math.round(reach * 0.006),
                   total_interactions: Math.round(reach * 0.14) },
     });
