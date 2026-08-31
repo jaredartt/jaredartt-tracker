@@ -10,6 +10,10 @@ on:
         description: 'Also pull the last 90 days of history (run this once, on day one)'
         type: boolean
         default: false
+      refill_column:
+        description: 'Column that marks a day as already done (leave as reach; set to e.g. follows to re-fetch one metric across history)'
+        type: string
+        default: 'reach'
 
 permissions:
   contents: write
@@ -37,7 +41,7 @@ jobs:
         if: inputs.backfill
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
-        run: node scripts/backfill.mjs
+        run: node scripts/backfill.mjs 89 "${{ inputs.refill_column || 'reach' }}"
 
       - name: Post performance
         env:

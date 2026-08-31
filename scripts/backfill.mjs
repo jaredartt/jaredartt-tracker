@@ -16,13 +16,18 @@ import { upsertCsv, readCsv, isoDate, log } from './lib.mjs';
 
 const days = Number(process.argv[2] || 89);
 
-// A day counts as done only if it actually has a reach figure. A row that was
-// written during a rate-limited run is half-empty and worth retrying.
+// A day counts as done only if this column has a value. Defaults to `reach`,
+// so a row written during a rate-limited run gets retried. Pass another column
+// (e.g. `follows`) to re-fetch history after fixing how a metric is collected.
+const completeKey = process.argv[3] || 'reach';
+
 const complete = new Set(
-  readCsv('insights.csv').rows.filter((r) => r.reach !== '' && r.reach != null).map((r) => r.date)
+  readCsv('insights.csv').rows
+    .filter((r) => r[completeKey] !== '' && r[completeKey] != null)
+    .map((r) => r.date)
 );
 
-log(`Backfilling up to ${days} days · ${complete.size} already complete`);
+log(`Backfilling up to ${days} days · ${complete.size} already have "${completeKey}"`);
 
 let stored = 0, skipped = 0, limited = false;
 

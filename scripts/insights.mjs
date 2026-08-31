@@ -26,7 +26,13 @@ export const METRICS = [
   'shares',
   'comments',
   'profile_links_taps',
-  'follows_and_unfollows',
+];
+
+// Metrics that only return anything useful when you ask for the split.
+// follows_and_unfollows without `breakdown` hands back a single number that
+// doesn't say which direction it went — useless — so it gets its own request.
+export const BREAKDOWN_METRICS = [
+  { name: 'follows_and_unfollows', breakdown: 'follow_type' },
 ];
 
 export const HEADER = [
@@ -86,7 +92,7 @@ function assign(row, name, parsed) {
   }
 }
 
-async function request(metrics, date, { legacy = false } = {}) {
+async function request(metrics, date, { legacy = false, breakdown } = {}) {
   const params = {
     metric: metrics.join(','),
     period: 'day',
@@ -94,6 +100,7 @@ async function request(metrics, date, { legacy = false } = {}) {
     until: unix(date, 1),
   };
   if (!legacy) params.metric_type = 'total_value';
+  if (breakdown) params.breakdown = breakdown;
   return api('/me/insights', params);
 }
 
@@ -148,6 +155,29 @@ export async function collectDay(date) {
       assign(row, metric, readEntry(res.data?.[0]));
     } catch (err) {
       if (isRateLimited(err)) throw err;
+    }
+  }
+
+  // --- metrics that need an explicit breakdown ----------------------------
+  for (const { name, breakdown } of BREAKDOWN_METRICS) {
+    if (cache.bad.includes(name)) continue;
+    try {
+      const res = await request([name], date, { breakdown });
+      const parsed = readEntry(res.data?.[0]);
+      if (parsed?.parts) {
+        assign(row, name, parsed);
+      } else {
+        // A bare number here can't be split into follows vs unfollows, and a
+        // wrong number is worse than a blank one. Leave it empty.
+        cache.bad.push(name);
+        cacheDirty = true;
+        log(`  · ${name}: returned no breakdown — leaving these columns blank`);
+      }
+    } catch (err) {
+      if (isRateLimited(err)) throw err;
+      cache.bad.push(name);
+      cacheDirty = true;
+      log(`  · ${name}: unavailable (${err.message})`);
     }
   }
 
