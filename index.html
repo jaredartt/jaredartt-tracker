@@ -212,13 +212,13 @@
       <h2>Follower growth</h2>
       <div class="ranges" id="ranges"></div>
     </div>
-    <p class="panel-note">Every hour since tracking began. Instagram keeps 90 days; this keeps everything.</p>
+    <p class="panel-note" id="growth-note">Every hour since tracking began. Instagram keeps 90 days; this keeps everything.</p>
     <div class="card"><div class="chart" id="growth"></div></div>
   </section>
 
   <section>
     <div class="panel-head"><h2>Net change per day</h2></div>
-    <p class="panel-note">Followers gained minus followers lost. The shape of the bars tells you more than the total does.</p>
+    <p class="insight" id="net-note"></p>
     <div class="card"><div class="chart" id="netchange"></div></div>
   </section>
 
@@ -267,7 +267,9 @@
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 function parseCsv(text) {
-  const lines = text.trim().split('\n').filter(Boolean);
+  // Tolerate CRLF — Excel and Numbers rewrite files that way, and a stray \r
+  // silently corrupts the last column's name and value.
+  const lines = text.replace(/\r\n?/g, '\n').trim().split('\n').filter(Boolean);
   if (!lines.length) return [];
   const head = splitRow(lines[0]);
   return lines.slice(1).map(l => {
@@ -432,7 +434,9 @@ function lineChart(host, points, opts = {}) {
       svg.appendChild(lab);
     }
 
-    const d = points.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(2)},${Y(p.y).toFixed(2)}`).join(' ');
+    const seg = (from, to) => points.slice(from, to + 1)
+      .map((p, i) => `${i ? 'L' : 'M'}${X(from + i).toFixed(2)},${Y(p.y).toFixed(2)}`).join(' ');
+    const d = seg(0, points.length - 1);
 
     if (opts.area !== false) {
       svg.appendChild(el('path', {
@@ -440,8 +444,22 @@ function lineChart(host, points, opts = {}) {
         fill: 'var(--accent-wash)', stroke: 'none',
       }));
     }
+
+    // Reconstructed history is drawn dashed, so an estimate never passes itself
+    // off as a measurement.
+    let lastEst = -1;
+    for (let i = 0; i < points.length; i++) if (points[i].est) lastEst = i;
+
+    if (lastEst >= 1) {
+      svg.appendChild(el('path', {
+        d: seg(0, lastEst), fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2,
+        'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+        'stroke-dasharray': '4 4', opacity: 0.75,
+      }));
+    }
     svg.appendChild(el('path', {
-      d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2,
+      d: seg(Math.max(0, lastEst), points.length - 1),
+      fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2,
       'stroke-linejoin': 'round', 'stroke-linecap': 'round',
     }));
 
@@ -484,7 +502,8 @@ function lineChart(host, points, opts = {}) {
       dot.setAttribute('cx', X(i)); dot.setAttribute('cy', Y(p.y));
       dot.setAttribute('opacity', 1);
       tip.show(X(i) * (r.width / W), Y(p.y) * (r.height / H),
-        p.tipLabel || p.label, (opts.unit || '') + fmt(p.y));
+        (p.tipLabel || p.label) + (p.est ? ' · reconstructed' : ''),
+        (opts.unit || '') + fmt(p.y));
     });
     hit.addEventListener('pointerleave', () => {
       cross.setAttribute('opacity', 0); dot.setAttribute('opacity', 0); tip.hide();
@@ -656,7 +675,12 @@ function heatmap(host, cells, opts = {}) {
   let media     = await load('data/media.json', JSON.parse);
   let demo = false;
 
-  if (!followers || followers.length < 2) {
+  // One snapshot plus Instagram's daily history is plenty — the curve gets
+  // reconstructed below. Only fall back to samples when there's nothing at all.
+  const hasReal = (followers && followers.length >= 1 && insights && insights.length >= 2)
+    || (followers && followers.length >= 2);
+
+  if (!hasReal) {
     ({ followers, insights, media } = demoData());
     demo = true;
     document.getElementById('banner').innerHTML =
@@ -669,12 +693,48 @@ function heatmap(host, cells, opts = {}) {
     .filter(r => num(r.followers) !== null)
     .sort((a, b) => a.ts_utc.localeCompare(b.ts_utc));
 
+  const ins = (insights || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+
+  // Instagram's own daily follow / unfollow counts — more trustworthy than
+  // differencing snapshots, and available for the whole 90-day window.
+  const netByDate = new Map();
+  for (const r of ins) {
+    const f = num(r.follows), u = num(r.unfollows);
+    if (f !== null || u !== null) netByDate.set(r.date, (f || 0) - (u || 0));
+  }
+
   // ---- daily series (last reading of each local day) ----------------------
   const dailyMap = new Map();
   for (const r of followers) {
     const { date } = localParts(r.ts_utc);
     dailyMap.set(date, num(r.followers));
   }
+
+  // Hourly snapshots only start the day tracking began. But today's count plus
+  // Instagram's daily follows and unfollows reconstructs the curve backwards —
+  // so the chart opens with real history instead of a single point. These are
+  // drawn dashed and labelled as reconstructed.
+  const estimated = new Set();
+  const dayBefore = (d) => {
+    const t = new Date(d + 'T12:00:00Z');
+    t.setUTCDate(t.getUTCDate() - 1);
+    return t.toISOString().slice(0, 10);
+  };
+
+  const measuredDates = [...dailyMap.keys()].sort();
+  if (measuredDates.length && ins.length) {
+    const earliest = ins[0].date;
+    let d = measuredDates[0];
+    let cur = dailyMap.get(d);
+    let guard = 0;
+    while (d > earliest && guard++ < 400) {
+      cur -= netByDate.get(d) ?? 0;
+      d = dayBefore(d);
+      dailyMap.set(d, cur);
+      estimated.add(d);
+    }
+  }
+
   const daily = [...dailyMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
   const current = daily.length ? daily[daily.length - 1][1] : null;
@@ -699,14 +759,14 @@ function heatmap(host, cells, opts = {}) {
     const v = rows.slice(-n).map(r => num(r[key])).filter(x => x !== null);
     return v.length ? v.reduce((a, b) => a + b, 0) : null;
   };
-  const ins = (insights || []).slice().sort((a, b) => a.date.localeCompare(b.date));
-
+  const d7 = current !== null && at(7) !== null ? current - at(7) : null;
   const stats = [
-    { label: 'Last 7 days',  value: signed(current - at(7)), cls: current - at(7) >= 0 ? 'up' : 'down', sub: 'net followers' },
+    { label: 'Last 7 days',  value: signed(d7 ?? 0), cls: (d7 ?? 0) >= 0 ? 'up' : 'down', sub: 'net followers' },
     { label: 'Last 30 days', value: signed(d30 ?? 0), cls: (d30 ?? 0) >= 0 ? 'up' : 'down', sub: 'net followers' },
+    { label: 'Follows', value: compact(sumLast(ins, 'follows', 30)), sub: 'gained, last 30 days' },
+    { label: 'Unfollows', value: compact(sumLast(ins, 'unfollows', 30)), sub: 'lost, last 30 days' },
     { label: 'Reach', value: compact(sumLast(ins, 'reach', 30)), sub: 'last 30 days' },
     { label: 'Profile views', value: compact(sumLast(ins, 'profile_views', 30)), sub: 'last 30 days' },
-    { label: 'Posts', value: fmt(media ? media.length : null), sub: 'tracked' },
   ];
   document.getElementById('stats').innerHTML = stats.map(s => `
     <div class="stat">
@@ -741,11 +801,20 @@ function heatmap(host, cells, opts = {}) {
       });
     } else {
       const slice = days === Infinity ? daily : daily.slice(-days);
-      points = slice.map(([date, y]) => ({ y, label: fmtDate(date), tipLabel: fmtDate(date) }));
+      points = slice.map(([date, y]) => ({
+        y, label: fmtDate(date), tipLabel: fmtDate(date), est: estimated.has(date),
+      }));
     }
     growthEl.innerHTML = '';
     lineChart(growthEl, points, { height: 280 });
   };
+
+  if (estimated.size) {
+    document.getElementById('growth-note').textContent =
+      `Solid where measured hourly. Dashed before ${fmtDate(measuredDates[0])} — ` +
+      `reconstructed by working today's count backwards through Instagram's daily ` +
+      `follow and unfollow figures. From here on, every point is measured.`;
+  }
 
   rangesEl.innerHTML = RANGES.map((r, i) =>
     `<button type="button" data-i="${i}" aria-pressed="${i === active}">${r.label}</button>`).join('');
@@ -759,15 +828,38 @@ function heatmap(host, cells, opts = {}) {
   drawGrowth();
 
   // ---- net change per day ------------------------------------------------
-  const netBars = [];
-  for (let i = 1; i < daily.length; i++) {
-    netBars.push({
-      label: fmtDate(daily[i][0]),
-      short: fmtDate(daily[i][0]),
-      value: daily[i][1] - daily[i - 1][1],
-    });
+  // Prefer Instagram's own follows/unfollows over differencing snapshots.
+  let netBars;
+  if (netByDate.size) {
+    netBars = [...netByDate.entries()].sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, value]) => {
+        const r = ins.find((x) => x.date === date) || {};
+        return {
+          label: `${fmtDate(date)} · +${num(r.follows) ?? 0} / −${num(r.unfollows) ?? 0}`,
+          short: fmtDate(date),
+          value,
+        };
+      });
+  } else {
+    netBars = [];
+    for (let i = 1; i < daily.length; i++) {
+      netBars.push({
+        label: fmtDate(daily[i][0]), short: fmtDate(daily[i][0]),
+        value: daily[i][1] - daily[i - 1][1],
+      });
+    }
   }
   columnChart(document.getElementById('netchange'), netBars.slice(-60), { signed: true, height: 220 });
+
+  const totF = ins.reduce((s, r) => s + (num(r.follows) || 0), 0);
+  const totU = ins.reduce((s, r) => s + (num(r.unfollows) || 0), 0);
+  if (netByDate.size) {
+    document.getElementById('net-note').innerHTML =
+      `Across ${netByDate.size} days Instagram recorded <b>${fmt(totF)}</b> follows and
+       <b>${fmt(totU)}</b> unfollows — a net of
+       <b>${signed(totF - totU)}</b>. These are Instagram's own daily figures, not
+       a guess from counting followers twice.`;
+  }
 
   // ---- hour of day -------------------------------------------------------
   // Difference between consecutive hourly snapshots, attributed to the hour
@@ -793,8 +885,11 @@ function heatmap(host, cells, opts = {}) {
     label: hourLabel(h), short: String(h).padStart(2, '0'),
     value: v === null ? 0 : Math.round(v * 100) / 100,
   }));
-  columnChart(document.getElementById('byhour'), hourBars,
-    { signed: true, height: 220, maxBar: 22 });
+  // An axis with 24 flat bars looks broken; say what's actually happening.
+  columnChart(document.getElementById('byhour'),
+    hourAvg.some((v) => v !== null) ? hourBars : null,
+    { signed: true, height: 220, maxBar: 22,
+      empty: 'Nothing here yet — this panel needs a couple of weeks of hourly readings before the pattern means anything.' });
 
   const ranked = hourAvg.map((v, h) => ({ h, v })).filter(x => x.v !== null && x.v > 0)
     .sort((a, b) => b.v - a.v);
