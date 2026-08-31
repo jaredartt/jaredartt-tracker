@@ -227,6 +227,7 @@
     { a: 'a-teal',   label: 'Online now',      value: compact(online), sub: 'members present' },
     { a: 'a-pink',   label: 'People talking',  value: fmt(posters7 || null), sub: 'posted in the last 7 days' },
     { a: 'a-orange', label: 'Busiest channel', value: chanRanked[0] ? `#${chanRanked[0][0]}` : '—',
+      cls: chanRanked[0] && chanRanked[0][0].length > 10 ? 'long' : '',
       sub: chanRanked[0] ? `${fmt(chanRanked[0][1])} messages, 30 days` : 'no data yet' },
   ].map((s, i) => tile(s, i + 6)).join('');
 
