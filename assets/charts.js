@@ -544,3 +544,30 @@ function buddy(host, { mood = 'ok', text }) {
     </div>
     <div class="bubble">${text}</div>`;
 }
+
+// --- phrase helpers for the companion --------------------------------------
+// The point of the variation is that the thing feels like it is speaking rather
+// than printing. Same facts every time; different mouth.
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+/** n distinct items, original order kept, chosen at random. */
+function sample(arr, n) {
+  const items = arr.filter(Boolean);
+  if (items.length <= n) return items;
+  const idx = items.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx.slice(0, n).sort((a, b) => a - b).map(i => items[i]);
+}
+
+/** Greeting that knows roughly what time it is where you are. */
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5)  return pick(['Up late.', 'Still awake?', "It's the small hours.", 'Late one.']);
+  if (h < 12) return pick(['Morning.', 'Morning!', 'Hey, morning.', 'Good morning.']);
+  if (h < 18) return pick(['Afternoon.', 'Hey.', 'Afternoon!', 'Hello.']);
+  if (h < 23) return pick(['Evening.', 'Good evening.', 'Evening!', 'Hey there.']);
+  return pick(['Late one.', 'Evening.', 'Still up?']);
+}

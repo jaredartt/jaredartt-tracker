@@ -33,6 +33,8 @@
 
   <div id="banner"></div>
 
+  <div id="buddy" class="buddy a-blue"></div>
+
   <div class="hero rise" style="animation-delay:.05s">
     <div class="hero-label">Followers</div>
     <div class="hero-value display" id="hero">—</div>
@@ -43,8 +45,6 @@
 
   <div class="stats stats-3" id="stats-net"></div>
   <div class="stats stats-4" id="stats-more"></div>
-
-  <div id="buddy" class="buddy a-blue"></div>
 
   <section class="block a-blue rise" style="animation-delay:.1s">
     <div class="block-head">
@@ -471,6 +471,8 @@
 
 
   // ---- the little guy, reading the numbers back in plain language ---------
+  // Facts are fixed; the wording is assembled fresh each load from a pool of
+  // phrasings, so it reads like someone talking rather than a template firing.
   {
     const daysSince = postDates.length
       ? Math.floor((Date.now() - new Date(postDates[postDates.length - 1])) / 86400_000) : null;
@@ -479,23 +481,87 @@
       return v.length ? v[v.length >> 1] : null;
     })();
     const f30 = sumLast(ins, 'follows', 30), u30 = sumLast(ins, 'unfollows', 30);
+    const pv30 = sumLast(ins, 'profile_views', 30), r30 = sumLast(ins, 'reach', 30);
     const net = d30 ?? 0;
+    const down = fmt(Math.abs(net));
 
-    let mood = 'ok', text;
-    if (net > 0) {
-      mood = 'happy';
-      text = `Good month — <b>${signed(net)}</b> followers. ${f30 ? `${fmt(f30)} people followed you and ${fmt(u30)} left, so you're comfortably ahead. ` : ''}` +
-        (daysSince !== null && daysSince <= 14
-          ? `You posted ${daysSince === 0 ? 'today' : daysSince === 1 ? 'yesterday' : `${daysSince} days ago`} — keep that rhythm and this line keeps pointing up.`
-          : `Worth posting again soon to keep it going.`);
-    } else if (daysSince !== null && daysSince > 45) {
-      mood = 'sad';
-      text = `I'll be straight with you. You're <b>down ${fmt(Math.abs(net))}</b> followers this month, and it's been <b>${fmt(daysSince)} days</b> since your last post. Those two facts are the same fact — a quiet account loses a couple of people a day no matter what else you do. ` +
-        (reachPer ? `But your work still lands: your posts have been reaching about <b>${fmt(reachPer)}</b> people each. That audience hasn't gone anywhere, it's just waiting.` : `Nothing is broken here. It's waiting for you.`);
-    } else {
-      text = `A slow month — <b>${net === 0 ? 'flat' : 'down ' + fmt(Math.abs(net))}</b>${net === 0 ? '' : ' followers'}. ${u30 ? `${fmt(u30)} people left and ${fmt(f30)} joined. ` : ''}Not alarming on its own; it's the kind of drift that reverses as soon as you're posting regularly again.`;
-    }
-    buddy(document.getElementById('buddy'), { mood, text });
+    const mood = net > 0 ? 'happy' : (daysSince !== null && daysSince > 45 ? 'sad' : 'ok');
+
+    // --- the headline: the one thing that must be said ---------------------
+    const headline = net > 0 ? pick([
+      `Good month — you're <b>up ${fmt(net)}</b> followers.`,
+      `Nice one: <b>+${fmt(net)}</b> followers over the last thirty days.`,
+      `The line's pointing up — <b>+${fmt(net)}</b> this month.`,
+      `You've gained <b>${fmt(net)}</b> followers this month. That's the direction you want.`,
+    ]) : net === 0 ? pick([
+      `Dead flat this month — same followers you started with.`,
+      `Perfectly level: no net change over thirty days.`,
+      `Nothing moved this month, up or down.`,
+    ]) : (daysSince !== null && daysSince > 45) ? pick([
+      `I'll be straight with you: you're <b>down ${down}</b> followers this month, and it's been <b>${fmt(daysSince)} days</b> since you posted. Those two facts are the same fact.`,
+      `Down <b>${down}</b> this month. It's been <b>${fmt(daysSince)} days</b> since your last post, and that's the whole explanation — a quiet account leaks a couple of people a day.`,
+      `<b>${fmt(daysSince)} days</b> since your last post, and <b>${down}</b> followers gone this month. Not a mystery, and not a crisis either.`,
+      `You're <b>down ${down}</b> over thirty days. The account's been quiet <b>${fmt(daysSince)} days</b> — that's not a coincidence, it's the cause.`,
+    ]) : pick([
+      `A slow month — <b>down ${down}</b> followers.`,
+      `Slightly down this month: <b>${down}</b> followers.`,
+      `<b>Down ${down}</b> over thirty days. Drift more than decline.`,
+    ]);
+
+    // --- optional observations, two of which get picked -------------------
+    const opts = [];
+    if (reachPer) opts.push(pick([
+      `Your work still lands, mind — back when you were posting, each one reached about <b>${fmt(reachPer)}</b> people.`,
+      `For what it's worth, your past posts pulled around <b>${fmt(reachPer)}</b> people apiece. That audience hasn't gone anywhere.`,
+      `A typical post of yours has reached roughly <b>${fmt(reachPer)}</b> accounts — a real room to walk into.`,
+    ]));
+    if (f30 !== null && u30 !== null) opts.push(pick([
+      `<b>${fmt(f30)}</b> people followed you this month and <b>${fmt(u30)}</b> left.`,
+      `The split: <b>${fmt(f30)}</b> follows against <b>${fmt(u30)}</b> unfollows.`,
+      `<b>${fmt(u30)}</b> walked out, <b>${fmt(f30)}</b> walked in.`,
+    ]));
+    if (r30) opts.push(pick([
+      `<b>${fmt(r30)}</b> accounts saw anything of yours in the last month.`,
+      `Reach over thirty days: <b>${fmt(r30)}</b> accounts.`,
+    ]));
+    if (pv30) opts.push(pick([
+      `<b>${fmt(pv30)}</b> people tapped through to look at your profile.`,
+      `Your profile got <b>${fmt(pv30)}</b> visits this month — people are still curious.`,
+    ]));
+    if (d7 !== null && Math.abs(d7) > 0) opts.push(pick([
+      `The last seven days alone: <b>${signed(d7)}</b>.`,
+      `Week so far, <b>${signed(d7)}</b>.`,
+    ]));
+    if (typeof ranked !== 'undefined' && ranked.length) opts.push(pick([
+      `You tend to pick people up around <b>${hourLabel(ranked[0].h)}</b>, if that's useful.`,
+      `Your followers arrive mostly around <b>${hourLabel(ranked[0].h)}</b>.`,
+    ]));
+    if (typeof best !== 'undefined' && best.length) opts.push(pick([
+      `Historically your posts do best published around <b>${hourLabel(best[0].h)}</b>.`,
+      `Going by your own history, <b>${hourLabel(best[0].h)}</b> is your strongest posting hour.`,
+    ]));
+
+    // --- how it signs off --------------------------------------------------
+    const closer = net > 0 ? pick([
+      `Keep the rhythm and this keeps going.`,
+      `Whatever you changed, do it again.`,
+      `More of that, please.`,
+      `Long may it continue.`,
+    ]) : (daysSince !== null && daysSince > 45) ? pick([
+      `Nothing's broken. It's just waiting for you.`,
+      `One post would start turning this around. No pressure — just saying.`,
+      `The audience is still there. That's the good news buried in this.`,
+      `Whenever you're ready. It'll still be here.`,
+    ]) : pick([
+      `Reverses quickly once you're posting regularly.`,
+      `Nothing to lose sleep over.`,
+      `Worth a post this week if you fancy it.`,
+    ]);
+
+    buddy(document.getElementById('buddy'), {
+      mood,
+      text: [greeting(), headline, ...sample(opts, 2), closer].join(' '),
+    });
   }
 
   document.getElementById('footer').textContent =

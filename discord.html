@@ -33,6 +33,8 @@
 
   <div id="banner"></div>
 
+  <div id="buddy" class="buddy a-violet"></div>
+
   <div class="hero rise" style="animation-delay:.05s">
     <div class="hero-label">Members</div>
     <div class="hero-value display" id="hero">—</div>
@@ -42,8 +44,6 @@
   <div class="stats stats-3" id="stats-members"></div>
   <div class="stats stats-3" id="stats-messages"></div>
   <div class="stats stats-3" id="stats-more"></div>
-
-  <div id="buddy" class="buddy a-violet"></div>
 
   <section class="block a-violet rise" style="animation-delay:.1s">
     <div class="block-head">
@@ -442,38 +442,96 @@
 
 
   // ---- the little guy -----------------------------------------------------
+  // Same facts every load, assembled from a pool of phrasings so it reads like
+  // someone talking rather than a template firing.
   {
     const wk = pct(m7, p7), mo = pct(m30, p30);
     const top = chanRanked[0];
     const net = d30 ?? 0;
+    const monthUp = mo !== null && mo >= 0;
 
     let mood = net > 0 ? 'happy' : net < 0 ? 'sad' : 'ok';
-    let text = net > 0
-      ? `Artist Academy's in good shape — <b>${fmt(current)}</b> members, <b>${signed(net)}</b> this month. `
-      : `<b>${fmt(current)}</b> members, <b>${signed(net)}</b> over the month. `;
+    if (wk !== null && wk < 0 && mood === 'happy') mood = 'ok';
 
-    if (posters7) {
-      text += `<b>${fmt(posters7)}</b> people actually said something in the last week`;
-      text += top ? `, mostly in <b>#${escapeHtml(top[0])}</b>. ` : '. ';
-    }
+    const headline = net > 0 ? pick([
+      `Artist Academy's in good shape — <b>${fmt(current)}</b> members, <b>+${fmt(net)}</b> this month.`,
+      `<b>${fmt(current)}</b> members now, <b>+${fmt(net)}</b> over thirty days. Steady growth.`,
+      `The server's growing: <b>+${fmt(net)}</b> this month, <b>${fmt(current)}</b> in total.`,
+      `Up <b>${fmt(net)}</b> members this month. That's <b>${fmt(current)}</b> people in there now.`,
+    ]) : net < 0 ? pick([
+      `Slightly down this month — <b>${fmt(Math.abs(net))}</b> members left, <b>${fmt(current)}</b> remain.`,
+      `<b>${fmt(current)}</b> members, <b>down ${fmt(Math.abs(net))}</b> over thirty days.`,
+    ]) : pick([
+      `Flat month — <b>${fmt(current)}</b> members, same as thirty days ago.`,
+      `<b>${fmt(current)}</b> members and holding steady.`,
+    ]);
 
-    // Four honest combinations. The "one quiet week" reassurance only belongs
-    // on a week that was actually quiet — otherwise it reads as nonsense.
-    if (wk !== null) {
-      const monthUp = mo !== null && mo >= 0;
-      if (wk >= 0 && monthUp) {
-        text += `Chat is up ${wk}% on last week, and the month is up ${mo}% too — it's building.`;
-      } else if (wk >= 0) {
-        text += `Chat is up ${wk}% on last week, which is a decent turn${mo !== null ? `, though the month overall is still down ${Math.abs(mo)}%` : ''}.`;
-      } else if (monthUp) {
-        text += `Chat is down ${Math.abs(wk)}% on last week, but the month as a whole is up ${mo}% — one quiet week inside a rising month is normal, so I wouldn't read much into it yet.`;
-        if (mood === 'happy') mood = 'ok';
-      } else {
-        text += `Chat is down ${Math.abs(wk)}% on last week${mo !== null ? ` and ${Math.abs(mo)}% on the month` : ''} — worth keeping an eye on.`;
-        mood = 'sad';
-      }
+    const opts = [];
+    if (posters7) opts.push(pick([
+      `<b>${fmt(posters7)}</b> people actually said something in the last week.`,
+      `<b>${fmt(posters7)}</b> members posted this week — the rest were reading.`,
+      `Talking in the last seven days: <b>${fmt(posters7)}</b> people.`,
+    ]));
+    if (top) opts.push(pick([
+      `<b>#${escapeHtml(top[0])}</b> is carrying most of the conversation.`,
+      `Most of it happens in <b>#${escapeHtml(top[0])}</b>, as usual.`,
+      `<b>#${escapeHtml(top[0])}</b> took <b>${fmt(top[1])}</b> messages this month on its own.`,
+    ]));
+    if (wk !== null) opts.push(
+      wk >= 0 && monthUp ? pick([
+        `Chat's up ${wk}% on last week, and the month is up ${mo}% too — it's building.`,
+        `Messages up ${wk}% week on week, ${mo}% on the month. Both pointing the same way.`,
+      ]) : wk >= 0 ? pick([
+        `Chat's up ${wk}% on last week, which is a decent turn.`,
+        `Messages picked up ${wk}% this week.`,
+      ]) : monthUp ? pick([
+        `Chat's down ${Math.abs(wk)}% this week, but the month's up ${mo}% — one quiet week inside a rising month is normal.`,
+        `Quieter week (${Math.abs(wk)}% down), though the month overall is up ${mo}%. Wouldn't read much into it yet.`,
+      ]) : pick([
+        `Chat's down ${Math.abs(wk)}% this week${mo !== null ? ` and ${Math.abs(mo)}% on the month` : ''} — worth an eye on.`,
+        `Message volume is sliding: ${Math.abs(wk)}% down on the week.`,
+      ]));
+    if (online && current) opts.push(pick([
+      `<b>${fmt(online)}</b> online right now, about ${Math.round((online / current) * 100)}% of the server.`,
+      `<b>${fmt(online)}</b> people are in there at this moment.`,
+    ]));
+    if (actTotal > 0) {
+      const byH = Array(24).fill(0);
+      actGrid.forEach(row => row.forEach((v, h) => { byH[h] += v; }));
+      const peak = byH.indexOf(Math.max(...byH));
+      opts.push(pick([
+        `The place wakes up around <b>${hourLabel(peak)}</b> your time.`,
+        `Busiest hour is <b>${hourLabel(peak)}</b> locally — good slot for anything you want seen.`,
+      ]));
     }
-    buddy(document.getElementById('buddy'), { mood, text });
+    if (typeof months !== 'undefined' && months.length) {
+      const yr = String(new Date().getFullYear());
+      const recent = months.filter(([m]) => m.startsWith(yr)).reduce((a, [, v]) => a + v, 0);
+      if (recent) opts.push(pick([
+        `<b>${fmt(recent)}</b> of your current members joined during ${yr}.`,
+        `Roughly <b>${fmt(recent)}</b> of the people in there are ${yr} arrivals.`,
+      ]));
+    }
+    if (typeof contrib !== 'undefined' && contrib.length) opts.push(pick([
+      `<b>${escapeHtml(contrib[0][0])}</b> has been the loudest voice this month, with ${fmt(contrib[0][1])} messages.`,
+      `Top talker this month: <b>${escapeHtml(contrib[0][0])}</b>.`,
+    ]));
+
+    const closer = net > 0 ? pick([
+      `Whatever you're doing over there, it's working.`,
+      `This one's healthy. Leave it alone and let it run.`,
+      `Good place to be.`,
+      `Nice contrast with the other tab, honestly.`,
+    ]) : pick([
+      `Worth a look at what changed.`,
+      `Not dramatic, but keep half an eye on it.`,
+      `Nothing alarming yet.`,
+    ]);
+
+    buddy(document.getElementById('buddy'), {
+      mood,
+      text: [greeting(), headline, ...sample(opts, 3), closer].join(' '),
+    });
   }
 
   document.getElementById('footer').textContent =
