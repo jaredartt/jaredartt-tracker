@@ -1,0 +1,25 @@
+name: Discord check
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: tracker-write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+        run: node scripts/discord-check.mjs
+      - run: |
+          git config user.name "jaredartt-tracker"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "discord connection check"
+          git pull --rebase --autostash origin main || true
+          git push
