@@ -13,6 +13,20 @@
               {
                 "dimension_keys": [
                   "follow_type"
+                ],
+                "results": [
+                  {
+                    "dimension_values": [
+                      "FOLLOWER"
+                    ],
+                    "value": 3
+                  },
+                  {
+                    "dimension_values": [
+                      "NON_FOLLOWER"
+                    ],
+                    "value": 6
+                  }
                 ]
               }
             ]
