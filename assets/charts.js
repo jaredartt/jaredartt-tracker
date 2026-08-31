@@ -58,6 +58,10 @@ const compact = n => {
 const signed = n => (n > 0 ? '+' : '') + fmt(n);
 const dayName = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const fmtDate = d => new Date(d + 'T12:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+// Axis labels stay short; tooltips carry the year, because "3 Jun" is ambiguous
+// the moment a chart spans more than twelve months.
+const fmtDateFull = d => new Date(d + 'T12:00:00Z')
+  .toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const hourLabel = h => String(h).padStart(2, '0') + ':00';
 
 function localParts(iso) {
@@ -462,4 +466,48 @@ function barList(host, items, opts = {}) {
       el.style.width = (REDUCED ? el.dataset.w : el.dataset.w) + '%';
     });
   });
+}
+
+// ---------------------------------------------------------------------------
+// Countdown to the next scheduled data collection.
+//
+// The page is static — it reads the CSVs once, at load. So this both counts
+// down to when fresh data lands in the repo AND reloads the page shortly after,
+// otherwise you would be staring at an hour-old number with a timer telling you
+// it had already updated.
+// ---------------------------------------------------------------------------
+function startUpdateClock(minuteOffset) {
+  const el = document.getElementById('next-update');
+  if (!el) return;
+
+  const openedAt = Date.now();
+  let reloadedFor = null;
+
+  const tick = () => {
+    const now = new Date();
+    const last = new Date(now);
+    last.setMinutes(minuteOffset, 0, 0);
+    if (last > now) last.setHours(last.getHours() - 1);
+    const next = new Date(last.getTime() + 3600_000);
+
+    const left = next - now;
+    const m = Math.floor(left / 60000);
+    const s = Math.floor((left % 60000) / 1000);
+    el.textContent = m >= 1 ? `${m}m` : `${s}s`;
+
+    // A job needs a minute or two to run and commit. Once that window has
+    // passed, pull the new numbers in — but never on a page just opened, and
+    // only once per hour.
+    const sinceLast = now - last;
+    const hourKey = last.toISOString().slice(0, 13);
+    if (sinceLast > 150_000 && sinceLast < 420_000
+        && Date.now() - openedAt > 300_000 && reloadedFor !== hourKey) {
+      reloadedFor = hourKey;
+      el.textContent = 'updating';
+      setTimeout(() => location.reload(), 1500);
+    }
+  };
+
+  tick();
+  setInterval(tick, 1000);
 }

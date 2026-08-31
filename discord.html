@@ -21,6 +21,9 @@
       <div class="updated" id="updated"></div>
     </div>
     <span class="spacer"></span>
+    <div class="clock" title="Data is collected on a schedule by GitHub Actions. The countdown is to the next scheduled run — GitHub's scheduler is best-effort and can run a few minutes late. The page reloads itself once the new numbers land.">
+      <span class="pip"></span><span class="lbl">next update</span><b id="next-update">—</b>
+    </div>
     <nav class="nav">
       <a href="index.html">Instagram</a>
       <a href="discord.html" aria-current="page">Discord</a>
@@ -243,7 +246,7 @@
     const slice = days === Infinity ? daily : daily.slice(-days);
     growthEl.innerHTML = '';
     lineChart(growthEl, slice.map(([date, y]) => ({
-      y, label: fmtDate(date), tipLabel: fmtDate(date), est: estimated.has(date),
+      y, label: fmtDate(date), tipLabel: fmtDateFull(date), est: estimated.has(date),
     })), { height: 300 });
   };
 
@@ -267,7 +270,7 @@
 
   // ---- messages per day ---------------------------------------------------
   const msgBars = messages.slice(-60).map(r => ({
-    label: `${fmtDate(r.date)} · ${fmt(num(r.humans) ?? 0)} human, ${fmt(num(r.bots) ?? 0)} bot`,
+    label: `${fmtDateFull(r.date)} · ${fmt(num(r.humans) ?? 0)} human, ${fmt(num(r.bots) ?? 0)} bot`,
     short: fmtDate(r.date), value: humansOn(r),
   }));
   columnChart(document.getElementById('messages'), msgBars, { height: 250 });
@@ -325,7 +328,7 @@
     { empty: 'No channel data yet.' });
 
   const posterSeries = messages.map(r => ({
-    y: num(r.authors), label: fmtDate(r.date), tipLabel: fmtDate(r.date),
+    y: num(r.authors), label: fmtDate(r.date), tipLabel: fmtDateFull(r.date),
   })).filter(p => p.y !== null).slice(-90);
   lineChart(document.getElementById('posters'), posterSeries,
     { height: 230, empty: 'Waiting for the first daily run.' });
@@ -365,6 +368,8 @@
     `${members.length.toLocaleString()} hourly readings · ${messages.length} days of messages · ` +
     `times shown in ${TZ}` + (demo ? ' · sample data' : '');
 })();
+
+startUpdateClock(10);
 
 // ===========================================================================
 //  Sample data — so the page is never blank before the bot is connected.

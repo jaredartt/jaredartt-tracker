@@ -288,3 +288,20 @@
 }
 .hbar:hover .hbar-fill { filter: brightness(1.12); }
 @media (max-width: 560px) { .hbar { grid-template-columns: minmax(70px, 110px) 1fr auto; } }
+
+  /* ---------- next-update countdown ---------- */
+  .clock {
+    align-items: center; background: var(--pill); border-radius: 999px;
+    color: var(--ink-2); display: flex; font-size: 12.5px; gap: 7px; padding: 9px 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  .clock .pip {
+    background: var(--accent); border-radius: 999px; height: 7px; width: 7px;
+    box-shadow: 0 0 0 3px rgba(var(--wash), .22);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .clock .pip { animation: breathe 2.6s ease-in-out infinite; }
+  }
+  @keyframes breathe { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  .clock b { color: var(--ink); font-weight: 500; }
+  @media (max-width: 620px) { .clock .lbl { display: none; } }

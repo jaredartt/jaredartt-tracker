@@ -21,6 +21,9 @@
       <div class="updated" id="updated"></div>
     </div>
     <span class="spacer"></span>
+    <div class="clock" title="Data is collected on a schedule by GitHub Actions. The countdown is to the next scheduled run — GitHub's scheduler is best-effort and can run a few minutes late. The page reloads itself once the new numbers land.">
+      <span class="pip"></span><span class="lbl">next update</span><b id="next-update">—</b>
+    </div>
     <nav class="nav">
       <a href="index.html" aria-current="page">Instagram</a>
       <a href="discord.html">Discord</a>
@@ -226,12 +229,12 @@
         return {
           y: num(r.followers),
           label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-          tipLabel: d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          tipLabel: d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         };
       });
     } else {
       const slice = days === Infinity ? daily : daily.slice(-days);
-      points = slice.map(([date, y]) => ({ y, label: fmtDate(date), tipLabel: fmtDate(date), est: estimated.has(date) }));
+      points = slice.map(([date, y]) => ({ y, label: fmtDate(date), tipLabel: fmtDateFull(date), est: estimated.has(date) }));
     }
     growthEl.innerHTML = '';
     lineChart(growthEl, points, { height: 300 });
@@ -260,14 +263,14 @@
     netBars = [...netByDate.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([date, value]) => {
       const r = ins.find(x => x.date === date) || {};
       return {
-        label: `${fmtDate(date)} · +${num(r.follows) ?? 0} / −${num(r.unfollows) ?? 0}`,
+        label: `${fmtDateFull(date)} · +${num(r.follows) ?? 0} / −${num(r.unfollows) ?? 0}`,
         short: fmtDate(date), value,
       };
     });
   } else {
     netBars = [];
     for (let i = 1; i < daily.length; i++)
-      netBars.push({ label: fmtDate(daily[i][0]), short: fmtDate(daily[i][0]), value: daily[i][1] - daily[i - 1][1] });
+      netBars.push({ label: fmtDateFull(daily[i][0]), short: fmtDate(daily[i][0]), value: daily[i][1] - daily[i - 1][1] });
   }
   columnChart(document.getElementById('netchange'), netBars.slice(-60),
     { signed: true, height: 240, diverging: true });
@@ -326,7 +329,7 @@
   }
 
   // ---- reach & profile views ---------------------------------------------
-  const insSeries = key => ins.map(r => ({ y: num(r[key]), label: fmtDate(r.date), tipLabel: fmtDate(r.date) }))
+  const insSeries = key => ins.map(r => ({ y: num(r[key]), label: fmtDate(r.date), tipLabel: fmtDateFull(r.date) }))
     .filter(p => p.y !== null).slice(-90);
   lineChart(document.getElementById('reach'), insSeries('reach'),
     { height: 210, empty: 'Waiting for the first daily run.' });
@@ -383,6 +386,8 @@
     `${followers.length.toLocaleString()} hourly readings · ${ins.length} days of insights · ` +
     `times shown in ${TZ}` + (demo ? ' · sample data' : '');
 })();
+
+startUpdateClock(0);
 
 // ===========================================================================
 //  Sample data — only used before the first real run, so the page is never blank.
