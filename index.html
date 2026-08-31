@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>@jaredartt — growth</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
   /* ===================================================================
@@ -101,11 +105,11 @@
     padding: 44px 0 34px;
   }
   .mark {
-    align-items: center; background: var(--ink); border-radius: 14px;
-    color: var(--page); display: flex; font-family: Unbounded, sans-serif;
-    font-size: 15px; font-weight: 800; height: 38px; justify-content: center;
-    width: 38px;
+    background: #fff; border-radius: 50%; box-shadow: var(--shadow);
+    display: block; height: 44px; object-fit: cover; width: 44px;
+    transition: transform .25s cubic-bezier(.2,.9,.3,1.4);
   }
+  .mark:hover { transform: scale(1.08) rotate(-3deg); }
   h1 { font-size: 17px; font-weight: 600; margin: 0; }
   .updated { color: var(--muted); font-size: 13px; }
   .spacer { flex: 1 1 auto; }
@@ -271,7 +275,7 @@
 <div class="wrap">
 
   <header class="rise">
-    <div class="mark">J</div>
+    <img class="mark" src="icons/icon-192.png" alt="jaredartt" width="44" height="44">
     <div>
       <h1>@jaredartt</h1>
       <div class="updated" id="updated"></div>
