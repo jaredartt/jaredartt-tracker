@@ -1,0 +1,38 @@
+{
+  "token": {
+    "present": true,
+    "length": 112,
+    "prefix": "https:"
+  },
+  "guild_id_env": "938690959221350450",
+  "identity": {
+    "ok": false,
+    "error": "Discord API 401: 401: Unauthorized",
+    "status": 401,
+    "code": 0
+  },
+  "guilds_the_bot_is_in": {
+    "ok": false,
+    "error": "Discord API 401: 401: Unauthorized",
+    "status": 401,
+    "code": 0
+  },
+  "target_guild": {
+    "ok": false,
+    "error": "Discord API 401: 401: Unauthorized",
+    "status": 401,
+    "code": 0
+  },
+  "members_intent": {
+    "ok": false,
+    "error": "Discord API 401: 401: Unauthorized",
+    "status": 401,
+    "code": 0
+  },
+  "channels": {
+    "ok": false,
+    "error": "Discord API 401: 401: Unauthorized",
+    "status": 401,
+    "code": 0
+  }
+}
