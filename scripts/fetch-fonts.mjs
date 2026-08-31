@@ -31,27 +31,38 @@ for (const fam of FAMILIES) {
 
   // Each @font-face block carries its own unicode-range; keep only latin so we
   // aren't shipping Cyrillic and Vietnamese nobody will render.
-  const blocks = sheet.split('@font-face').slice(1);
-  let kept = 0;
-
-  for (const block of blocks) {
+  const faces = [];
+  for (const block of sheet.split('@font-face').slice(1)) {
     const weight = (block.match(/font-weight:\s*(\d+)/) || [])[1];
     const src = (block.match(/url\((https:\/\/[^)]+\.woff2)\)/) || [])[1];
     const range = (block.match(/unicode-range:\s*([^;]+);/) || [])[1] || '';
     if (!weight || !src) continue;
-    // latin block is the one containing U+0000-00FF
-    if (!/U\+0000-00FF/i.test(range)) continue;
+    if (!/U\+0000-00FF/i.test(range)) continue;   // latin block only
+    faces.push({ weight: Number(weight), src, range: range.trim() });
+  }
+  if (!faces.length) throw new Error(`${fam.name}: no latin faces found — Google changed its response`);
 
-    const file = `${fam.name.toLowerCase()}-${weight}.woff2`;
+  // Both of these are variable fonts, so Google hands back the SAME file for
+  // every weight. Downloading it three times would triple the page weight for
+  // nothing — so group by URL and emit one face with a weight range.
+  const byUrl = new Map();
+  for (const f of faces) {
+    if (!byUrl.has(f.src)) byUrl.set(f.src, []);
+    byUrl.get(f.src).push(f);
+  }
+
+  for (const [src, group] of byUrl) {
+    const lo = Math.min(...group.map(g => g.weight));
+    const hi = Math.max(...group.map(g => g.weight));
+    const file = `${fam.name.toLowerCase()}${lo === hi ? '-' + lo : ''}.woff2`;
     const bin = Buffer.from(await (await fetch(src, { headers: { 'User-Agent': UA } })).arrayBuffer());
     fs.writeFileSync(path.join(OUT, file), bin);
-    kept++;
 
-    css += `@font-face{font-family:'${fam.name}';font-style:normal;font-weight:${weight};` +
-           `font-display:swap;src:url('${file}') format('woff2');unicode-range:${range.trim()};}\n`;
-    console.log(`${file}  ${(bin.length / 1024).toFixed(1)} KB`);
+    css += `@font-face{font-family:'${fam.name}';font-style:normal;` +
+           `font-weight:${lo === hi ? lo : `${lo} ${hi}`};font-display:swap;` +
+           `src:url('${file}') format('woff2');unicode-range:${group[0].range};}\n`;
+    console.log(`${file}  ${(bin.length / 1024).toFixed(1)} KB  weights ${lo}-${hi}`);
   }
-  if (!kept) throw new Error(`${fam.name}: no latin faces found — Google changed its response`);
 }
 
 fs.writeFileSync(path.join(OUT, 'fonts.css'), css);
