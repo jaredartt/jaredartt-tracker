@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Artist Academy — server</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="a-violet">
+<div class="wrap">
+
+  <header class="rise">
+    <img class="mark" src="icons/icon-192.png" alt="jaredartt" width="44" height="44">
+    <div>
+      <h1>Artist Academy</h1>
+      <div class="updated" id="updated"></div>
+    </div>
+    <span class="spacer"></span>
+    <nav class="nav">
+      <a href="index.html">Instagram</a>
+      <a href="discord.html" aria-current="page">Discord</a>
+    </nav>
+    <button class="btn" id="theme" type="button">Theme</button>
+  </header>
+
+  <div id="banner"></div>
+
+  <div class="hero rise" style="animation-delay:.05s">
+    <div class="hero-label">Members</div>
+    <div class="hero-value display" id="hero">—</div>
+    <div class="hero-sub" id="hero-sub"></div>
+  </div>
+
+  <div class="stats stats-3" id="stats-members"></div>
+  <div class="stats stats-3" id="stats-messages"></div>
+  <div class="stats stats-3" id="stats-more"></div>
+
+  <section class="block a-violet rise" style="animation-delay:.1s">
+    <div class="block-head">
+      <span class="dot"></span><h2>Member growth</h2>
+      <div class="ranges" id="ranges"></div>
+    </div>
+    <p class="note" id="growth-note"></p>
+    <div class="chart" id="growth"></div>
+  </section>
+
+  <section class="block a-blue rise" style="animation-delay:.14s">
+    <div class="block-head"><span class="dot"></span><h2>Messages per day</h2></div>
+    <p class="note" id="messages-note"></p>
+    <div class="chart" id="messages"></div>
+  </section>
+
+  <section class="block a-teal rise" style="animation-delay:.18s">
+    <div class="block-head"><span class="dot"></span><h2>When people join</h2></div>
+    <p class="note" id="hour-insight"></p>
+    <div class="chart" id="byhour"></div>
+    <details id="heat-wrap" hidden>
+      <summary>Show as a week grid</summary>
+      <div class="heat"><div class="heat-inner"><div class="chart" id="heatmap"></div></div></div>
+    </details>
+  </section>
+
+  <div class="two-up">
+    <section class="block a-orange rise" style="animation-delay:.22s">
+      <div class="block-head"><span class="dot"></span><h2>Busiest channels</h2></div>
+      <p class="note">Human messages over the last 30 days.</p>
+      <div id="channels"></div>
+    </section>
+    <section class="block a-pink rise" style="animation-delay:.26s">
+      <div class="block-head"><span class="dot"></span><h2>People talking</h2></div>
+      <p class="note">Distinct members who posted each day — the number that says whether a community is alive.</p>
+      <div class="chart" id="posters"></div>
+    </section>
+  </div>
+
+  <section class="block a-pink rise" style="animation-delay:.3s; margin-top:24px">
+    <div class="block-head"><span class="dot"></span><h2>Top contributors</h2></div>
+    <p class="note" id="contrib-note"></p>
+    <div id="contrib-table"></div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script src="assets/charts.js"></script>
+<script>
+// ===========================================================================
+//  Build the page
+// ===========================================================================
+(async function main() {
+  let members  = await load('data/discord-members.csv', parseCsv);
+  let messages = await load('data/discord-messages.csv', parseCsv);
+  let joins    = await load('data/discord-joins.csv', parseCsv);
+  let channels = await load('data/discord-channel-daily.csv', parseCsv);
+  let authors  = await load('data/discord-authors.csv', parseCsv);
+  let meta     = await load('data/discord-meta.json', JSON.parse);
+  let demo = false;
+
+  const hasReal = members && members.length >= 1 && messages && messages.length >= 1;
+  if (!hasReal) {
+    ({ members, messages, joins, channels, authors } = demoServer());
+    meta = { names: 'pseudonymous' };
+    demo = true;
+    document.getElementById('banner').innerHTML =
+      `<div class="banner"><b>Showing sample data.</b> Real numbers replace this once the bot is
+       connected and the first workflow run finishes.</div>`;
+  }
+
+  members = members.filter(r => num(r.members) !== null).sort((a, b) => a.ts_utc.localeCompare(b.ts_utc));
+  messages = (messages || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+  joins = (joins || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+
+  // ---- member series, with history reconstructed from join dates ----------
+  const dailyMap = new Map();
+  for (const r of members) dailyMap.set(localParts(r.ts_utc).date, num(r.members));
+
+  const joinsByDate = new Map(joins.map(r => [r.date, num(r.joins) || 0]));
+  const estimated = new Set();
+  const dayBefore = (d) => {
+    const t = new Date(d + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() - 1);
+    return t.toISOString().slice(0, 10);
+  };
+
+  const measuredDates = [...dailyMap.keys()].sort();
+  if (measuredDates.length && joins.length) {
+    const earliest = joins[0].date;
+    let d = measuredDates[0], cur = dailyMap.get(d), guard = 0;
+    while (d > earliest && guard++ < 4000) {
+      cur -= joinsByDate.get(d) ?? 0;
+      d = dayBefore(d);
+      dailyMap.set(d, Math.max(0, cur));
+      estimated.add(d);
+    }
+  }
+
+  const daily = [...dailyMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const current = daily.length ? daily[daily.length - 1][1] : null;
+  const at = back => {
+    if (daily.length < 2) return null;
+    const i = daily.length - 1 - back;
+    return i >= 0 ? daily[i][1] : daily[0][1];
+  };
+
+  countUp(document.getElementById('hero'), current);
+
+  let d24 = null;
+  if (members.length >= 2) {
+    const lastTs = Date.parse(members[members.length - 1].ts_utc);
+    let ref = null;
+    for (const r of members) if (Date.parse(r.ts_utc) <= lastTs - 86400_000) ref = r;
+    if (ref) d24 = num(members[members.length - 1].members) - num(ref.members);
+  }
+  const d7 = current !== null && at(7) !== null ? current - at(7) : null;
+  const d30 = current !== null && at(30) !== null ? current - at(30) : null;
+
+  document.getElementById('hero-sub').innerHTML = d30 === null ? ''
+    : `<span class="${d30 >= 0 ? 'up' : 'down'}">${signed(d30)}</span> over the last 30 days`;
+
+  document.getElementById('updated').textContent = members.length
+    ? 'updated ' + new Date(members[members.length - 1].ts_utc)
+        .toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  // ---- tiles --------------------------------------------------------------
+  const delta = (v) => v === null ? '—' : signed(v);
+  const dcls = (v) => v === null ? 'pending' : (v >= 0 ? 'up' : 'down');
+  const tile = (s, i) => `
+    <div class="stat ${s.a} rise" style="animation-delay:${.06 + i * .04}s">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value ${s.cls || ''}">${s.value}</div>
+      <div class="stat-sub">${s.sub}</div>
+    </div>`;
+
+  document.getElementById('stats-members').innerHTML = [
+    { a: 'a-teal',   label: 'Members, last 24 hours', value: delta(d24), cls: dcls(d24),
+      sub: d24 === null ? 'needs a day of readings' : 'net members' },
+    { a: 'a-blue',   label: 'Members, last 7 days',  value: delta(d7),  cls: dcls(d7),  sub: 'net members' },
+    { a: 'a-violet', label: 'Members, last 30 days', value: delta(d30), cls: dcls(d30), sub: 'net members' },
+  ].map(tile).join('');
+
+  // Messages: value for the window, plus how it compares with the window before
+  // it. "Is it growing?" is the whole question, so the comparison is the point.
+  const humansOn = (r) => num(r.humans) ?? num(r.messages) ?? 0;
+  const windowSum = (from, to) => messages.slice(messages.length - to, messages.length - from)
+    .reduce((s, r) => s + humansOn(r), 0);
+
+  const pct = (now, prev) => {
+    if (!prev) return null;
+    return Math.round(((now - prev) / prev) * 100);
+  };
+  const trend = (n, p, unit) => {
+    const c = pct(n, p);
+    if (c === null) return `vs previous ${unit}: —`;
+    return `<span class="${c >= 0 ? 'up' : 'down'}">${c >= 0 ? '+' : ''}${c}%</span> vs previous ${unit}`;
+  };
+
+  const m1 = windowSum(0, 1),  p1 = windowSum(1, 2);
+  const m7 = windowSum(0, 7),  p7 = windowSum(7, 14);
+  const m30 = windowSum(0, 30), p30 = windowSum(30, 60);
+
+  document.getElementById('stats-messages').innerHTML = [
+    { a: 'a-blue',   label: 'Messages yesterday',  value: compact(m1),  sub: trend(m1, p1, 'day') },
+    { a: 'a-pink',   label: 'Messages, 7 days',    value: compact(m7),  sub: trend(m7, p7, 'week') },
+    { a: 'a-orange', label: 'Messages, 30 days',   value: compact(m30), sub: trend(m30, p30, 'month') },
+  ].map((s, i) => tile(s, i + 3)).join('');
+
+  // ---- active people, busiest channel ------------------------------------
+  const recent = (rows, days) => {
+    const cut = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
+    return (rows || []).filter(r => r.date >= cut);
+  };
+  const posters7 = new Set(recent(authors, 7).map(r => r.author)).size;
+
+  const chanTotals = new Map();
+  for (const r of recent(channels, 30)) {
+    chanTotals.set(r.channel, (chanTotals.get(r.channel) || 0) + (num(r.messages) || 0));
+  }
+  const chanRanked = [...chanTotals.entries()].sort((a, b) => b[1] - a[1]);
+  const online = members.length ? num(members[members.length - 1].online) : null;
+
+  document.getElementById('stats-more').innerHTML = [
+    { a: 'a-teal',   label: 'Online now',      value: compact(online), sub: 'members present' },
+    { a: 'a-pink',   label: 'People talking',  value: fmt(posters7 || null), sub: 'posted in the last 7 days' },
+    { a: 'a-orange', label: 'Busiest channel', value: chanRanked[0] ? `#${chanRanked[0][0]}` : '—',
+      sub: chanRanked[0] ? `${fmt(chanRanked[0][1])} messages, 30 days` : 'no data yet' },
+  ].map((s, i) => tile(s, i + 6)).join('');
+
+  // ---- member growth ------------------------------------------------------
+  const rangesEl = document.getElementById('ranges');
+  const growthEl = document.getElementById('growth');
+  const RANGES = [{ label: '30d', days: 30 }, { label: '90d', days: 90 },
+                  { label: '1y', days: 365 }, { label: 'All', days: Infinity }];
+  let active = 1;
+
+  const drawGrowth = () => {
+    const days = RANGES[active].days;
+    const slice = days === Infinity ? daily : daily.slice(-days);
+    growthEl.innerHTML = '';
+    lineChart(growthEl, slice.map(([date, y]) => ({
+      y, label: fmtDate(date), tipLabel: fmtDate(date), est: estimated.has(date),
+    })), { height: 300 });
+  };
+
+  rangesEl.innerHTML = RANGES.map((r, i) =>
+    `<button type="button" data-i="${i}" aria-pressed="${i === active}">${r.label}</button>`).join('');
+  rangesEl.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if (!b) return;
+    active = Number(b.dataset.i);
+    rangesEl.querySelectorAll('button').forEach((x, i) => x.setAttribute('aria-pressed', String(i === active)));
+    drawGrowth();
+  });
+  drawGrowth();
+
+  document.getElementById('growth-note').innerHTML = estimated.size
+    ? `Solid from ${fmtDate(measuredDates[0])}, when hourly tracking began. The dotted part is
+       rebuilt from the join dates of members who are <b>still here</b> — so it can't see anyone
+       who has since left, which means it understates the past and never dips. Treat its shape as
+       indicative and its recent end as exact.`
+    : `Measured hourly. Discord keeps no history of its own, so this exists only because something
+       writes it down every hour.`;
+
+  // ---- messages per day ---------------------------------------------------
+  const msgBars = messages.slice(-60).map(r => ({
+    label: `${fmtDate(r.date)} · ${fmt(num(r.humans) ?? 0)} human, ${fmt(num(r.bots) ?? 0)} bot`,
+    short: fmtDate(r.date), value: humansOn(r),
+  }));
+  columnChart(document.getElementById('messages'), msgBars, { height: 250 });
+
+  const totalHuman = messages.reduce((s, r) => s + humansOn(r), 0);
+  const totalBot = messages.reduce((s, r) => s + (num(r.bots) || 0), 0);
+  document.getElementById('messages-note').innerHTML =
+    `Human messages only — ${fmt(totalBot)} bot message${totalBot === 1 ? '' : 's'} were counted
+     separately and excluded, so a chatty welcome bot can't make a quiet week look busy.
+     ${fmt(totalHuman)} human messages across ${messages.length} days.`;
+
+  // ---- when people join ---------------------------------------------------
+  const hourSum = Array(24).fill(0), hourN = Array(24).fill(0);
+  const grid = Array.from({ length: 7 }, () => Array(24).fill(null));
+  const gridN = Array.from({ length: 7 }, () => Array(24).fill(0));
+
+  for (let i = 1; i < members.length; i++) {
+    const gapH = (Date.parse(members[i].ts_utc) - Date.parse(members[i - 1].ts_utc)) / 3600000;
+    if (gapH < 0.5 || gapH > 1.5) continue;
+    const delta = num(members[i].members) - num(members[i - 1].members);
+    if (!Number.isFinite(delta)) continue;
+    const { hour, weekday } = localParts(members[i].ts_utc);
+    hourSum[hour] += delta; hourN[hour]++;
+    grid[weekday][hour] = (grid[weekday][hour] ?? 0) + delta;
+    gridN[weekday][hour]++;
+  }
+
+  const hourAvg = hourSum.map((s, h) => hourN[h] ? s / hourN[h] : null);
+  columnChart(document.getElementById('byhour'),
+    hourAvg.some(v => v !== null)
+      ? hourAvg.map((v, h) => ({ label: hourLabel(h), short: String(h).padStart(2, '0'),
+                                 value: v === null ? 0 : Math.round(v * 100) / 100 }))
+      : null,
+    { signed: true, height: 230, maxBar: 20, diverging: true,
+      empty: 'Nothing here yet — this needs a couple of weeks of hourly readings before the pattern means anything.' });
+
+  const ranked = hourAvg.map((v, h) => ({ h, v })).filter(x => x.v !== null && x.v > 0).sort((a, b) => b.v - a.v);
+  document.getElementById('hour-insight').innerHTML = ranked.length >= 3
+    ? `Across ${hourN.reduce((a, b) => a + b, 0).toLocaleString()} hourly readings, the server grows
+       fastest around <b>${hourLabel(ranked[0].h)}</b>, <b>${hourLabel(ranked[1].h)}</b> and
+       <b>${hourLabel(ranked[2].h)}</b>, local time — useful for timing an event or an announcement.`
+    : `Building up. Each hourly reading adds a data point; the pattern becomes trustworthy after about two weeks.`;
+
+  if (gridN.some(row => row.some(n => n > 0))) {
+    document.getElementById('heat-wrap').hidden = false;
+    heatmap(document.getElementById('heatmap'),
+      grid.flatMap((row, weekday) => row.map((v, hour) => ({
+        weekday, hour, value: gridN[weekday][hour] ? v / gridN[weekday][hour] : null,
+      }))));
+  }
+
+  // ---- channels + posters -------------------------------------------------
+  barList(document.getElementById('channels'),
+    chanRanked.slice(0, 10).map(([name, value]) => ({ label: '#' + name, value })),
+    { empty: 'No channel data yet.' });
+
+  const posterSeries = messages.map(r => ({
+    y: num(r.authors), label: fmtDate(r.date), tipLabel: fmtDate(r.date),
+  })).filter(p => p.y !== null).slice(-90);
+  lineChart(document.getElementById('posters'), posterSeries,
+    { height: 230, empty: 'Waiting for the first daily run.' });
+
+  // ---- top contributors ---------------------------------------------------
+  const contribTotals = new Map();
+  const contribDays = new Map();
+  for (const r of recent(authors, 30)) {
+    contribTotals.set(r.author, (contribTotals.get(r.author) || 0) + (num(r.messages) || 0));
+    if (!contribDays.has(r.author)) contribDays.set(r.author, new Set());
+    contribDays.get(r.author).add(r.date);
+  }
+  const contrib = [...contribTotals.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15);
+
+  document.getElementById('contrib-note').innerHTML = meta?.names === 'real'
+    ? `Most active members over the last 30 days.`
+    : `Most active members over the last 30 days, shown under stable pseudonyms. This site is
+       public, and publishing your members' names alongside their activity is their call as much
+       as yours — so names are hidden by default. Set the <b>DISCORD_SHOW_NAMES</b> repository
+       variable to <b>true</b> if you decide otherwise.`;
+
+  document.getElementById('contrib-table').innerHTML = contrib.length ? `
+    <table>
+      <thead><tr><th>Member</th><th class="n">Messages</th><th class="n">Days active</th><th class="n">Per active day</th></tr></thead>
+      <tbody>${contrib.map(([name, total]) => {
+        const d = contribDays.get(name).size;
+        return `<tr>
+          <td>${escapeHtml(name)}</td>
+          <td class="n">${fmt(total)}</td>
+          <td class="n">${fmt(d)}</td>
+          <td class="n">${(total / d).toFixed(1)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>` : '<div class="empty">No activity recorded yet.</div>';
+
+  document.getElementById('footer').textContent =
+    `${members.length.toLocaleString()} hourly readings · ${messages.length} days of messages · ` +
+    `times shown in ${TZ}` + (demo ? ' · sample data' : '');
+})();
+
+// ===========================================================================
+//  Sample data — so the page is never blank before the bot is connected.
+// ===========================================================================
+function demoServer() {
+  const now = Date.now();
+  const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+  const shape = h => [0.3,0.2,0.15,0.1,0.1,0.15,0.3,0.6,0.9,1.1,1.2,1.3,
+                      1.4,1.35,1.3,1.4,1.6,1.9,2.3,2.6,2.4,1.8,1.1,0.6][h];
+
+  const members = [];
+  let m = 3900;
+  for (let i = 24 * 30; i >= 0; i--) {
+    const t = new Date(now - i * 3600000);
+    m += shape(t.getHours()) * (0.25 + Math.random() * 0.4) - 0.25;
+    members.push({
+      ts_utc: new Date(t.setMinutes(0, 0, 0)).toISOString().slice(0, 13) + ':00:00Z',
+      members: String(Math.round(m)), online: String(Math.round(m * 0.14 + Math.random() * 40)),
+    });
+  }
+
+  const messages = [], authorsRows = [], channelRows = [];
+  const chanNames = ['general', 'share-your-work', 'critique', 'resources', 'off-topic', 'introductions'];
+  for (let i = 89; i >= 0; i--) {
+    const date = iso(now - i * 86400000);
+    const wk = [1, 1.05, 1.1, 1.1, 1.25, 1.35, 1.15][(new Date(date).getDay() + 6) % 7];
+    const humans = Math.round((150 + (89 - i) * 1.2) * wk * (0.7 + Math.random() * 0.6));
+    const bots = Math.round(humans * 0.08);
+    const posters = Math.round(humans / (4 + Math.random() * 3));
+    messages.push({ date, messages: String(humans + bots), humans: String(humans), bots: String(bots), authors: String(posters) });
+
+    let left = humans;
+    chanNames.forEach((c, idx) => {
+      const share = idx === 0 ? 0.4 : idx === 1 ? 0.24 : 0.36 / (chanNames.length - 2);
+      const v = Math.round(humans * share * (0.7 + Math.random() * 0.6));
+      left -= v;
+      channelRows.push({ date, channel: c, messages: String(Math.max(0, v)) });
+    });
+    for (let a = 0; a < posters; a++) {
+      authorsRows.push({ date, author: 'Member ' + (1000 + (a * 37) % 260).toString(16).toUpperCase(),
+                         messages: String(1 + Math.floor(Math.random() * 9)) });
+    }
+  }
+
+  const joins = [];
+  for (let i = 700; i >= 30; i--) {
+    joins.push({ date: iso(now - i * 86400000), joins: String(Math.max(0, Math.round(2 + Math.random() * 6))) });
+  }
+
+  return { members, messages, joins, channels: channelRows, authors: authorsRows };
+}
+</script>
+</body>
+</html>

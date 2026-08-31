@@ -1,0 +1,51 @@
+name: Discord daily
+
+# 04:00 UTC — after the day has closed, so yesterday's message count is final.
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      backfill_days:
+        description: 'Days of message history to pull (leave at 2 for a normal run; 90 for the one-off backfill)'
+        type: string
+        default: '2'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tracker-write
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    # A 90-day backfill on a busy server walks a lot of history.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      - name: Messages
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+          DISCORD_SHOW_NAMES: ${{ vars.DISCORD_SHOW_NAMES }}
+        run: node scripts/discord-messages.mjs "${{ inputs.backfill_days || '2' }}"
+
+      - name: Member join dates
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
+        run: node scripts/discord-members.mjs
+
+      - name: Commit
+        run: |
+          git config user.name  "jaredartt-tracker"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "discord: $(date -u +%Y-%m-%d)"
+          git pull --rebase --autostash origin ${{ github.ref_name }} || true
+          git push
