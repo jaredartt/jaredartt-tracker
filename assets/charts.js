@@ -562,12 +562,15 @@ function sample(arr, n) {
   return idx.slice(0, n).sort((a, b) => a - b).map(i => items[i]);
 }
 
-/** Greeting that knows roughly what time it is where you are. */
-function greeting() {
+/** Greeting that knows roughly what time it is where you are, and who you are. */
+function greeting(name) {
+  const n = name || '';
+  const c = n ? `, ${n}` : '';   // "Morning, Jared."
+  const i = n ? ` ${n}` : '';    // "Hey Jared."
   const h = new Date().getHours();
-  if (h < 5)  return pick(['Up late.', 'Still awake?', "It's the small hours.", 'Late one.']);
-  if (h < 12) return pick(['Morning.', 'Morning!', 'Hey, morning.', 'Good morning.']);
-  if (h < 18) return pick(['Afternoon.', 'Hey.', 'Afternoon!', 'Hello.']);
-  if (h < 23) return pick(['Evening.', 'Good evening.', 'Evening!', 'Hey there.']);
-  return pick(['Late one.', 'Evening.', 'Still up?']);
+  if (h < 5)  return pick([`Up late${c}.`, `Still awake${c}?`, `It's the small hours${c}.`, `Late one${c}.`]);
+  if (h < 12) return pick([`Morning${c}.`, `Morning${c}!`, `Hey${i}, morning.`, `Good morning${c}.`]);
+  if (h < 18) return pick([`Afternoon${c}.`, `Hey${i}.`, `Afternoon${c}!`, `Hello${i}.`]);
+  if (h < 23) return pick([`Evening${c}.`, `Good evening${c}.`, `Evening${c}!`, `Hey there${c}.`]);
+  return pick([`Late one${c}.`, `Evening${c}.`, `Still up${c}?`]);
 }
