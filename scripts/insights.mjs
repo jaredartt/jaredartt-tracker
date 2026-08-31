@@ -1,14 +1,20 @@
 // Daily account insights.
 //
-// Meta renames and retires metrics roughly once a year (`impressions` died in
-// April 2025, replaced by `views`). So this asks for each metric on its own and
-// records whatever answers, instead of sending one big request that fails
-// entirely because a single name went stale. A metric that disappears leaves a
-// gap in one column; everything else keeps recording.
+// Two constraints shape this file:
+//
+//  1. Instagram allows 200 API calls per hour. So all the metrics for one day go
+//     out in a SINGLE request rather than one request each — the difference
+//     between ~2 calls a day and ~11, which matters enormously when backfilling
+//     90 days at once.
+//
+//  2. Meta renames and retires metrics roughly once a year (`impressions` died
+//     in April 2025, replaced by `views`). So when the batch request fails, it
+//     falls back to asking one metric at a time, learns which name is dead, and
+//     remembers that in data/metrics.json. A retired metric costs one blank
+//     column, never the whole run.
 
-import { api, upsertCsv, readCsv, isoDate, log } from './lib.mjs';
+import { api, upsertCsv, readCsv, readJson, writeJson, isoDate, log } from './lib.mjs';
 
-// Order here is the order of columns in the CSV.
 export const METRICS = [
   'reach',              // unique accounts that saw your work
   'views',              // total views (replaced "impressions")
@@ -23,7 +29,7 @@ export const METRICS = [
   'follows_and_unfollows',
 ];
 
-const HEADER = [
+export const HEADER = [
   'date', 'reach', 'views', 'profile_views', 'accounts_engaged',
   'total_interactions', 'likes', 'saves', 'shares', 'comments',
   'profile_links_taps', 'follows', 'unfollows',
@@ -33,76 +39,126 @@ const DAY = 86400;
 const unix = (dateStr, offsetDays = 0) =>
   Math.floor(Date.parse(dateStr + 'T00:00:00Z') / 1000) + offsetDays * DAY;
 
-/** Pull every value out of whichever response shape Meta used. */
-function parse(metric, payload) {
-  const d = payload?.data?.[0];
-  if (!d) return null;
+/** Meta's rate-limit signals. Worth stopping for rather than hammering through. */
+export function isRateLimited(err) {
+  return err?.status === 429 || [4, 17, 32, 613].includes(Number(err?.code));
+}
 
-  const tv = d.total_value;
+// --- metric capability cache ------------------------------------------------
+// { bad: [...], legacy: [...] } — learned once, reused forever.
+const loadCache = () => {
+  const c = readJson('metrics.json', {});
+  return { bad: c.bad || [], legacy: c.legacy || [] };
+};
+const saveCache = (c) => writeJson('metrics.json', c);
+
+/** Pull every value out of whichever response shape Meta used for one entry. */
+function readEntry(entry) {
+  const tv = entry.total_value;
   if (tv) {
-    if (typeof tv.value === 'number') return { [metric]: tv.value };
+    if (typeof tv.value === 'number') return { value: tv.value };
     const breakdown = tv.breakdowns?.[0];
     if (breakdown?.results) {
-      const out = {};
+      const parts = {};
       for (const r of breakdown.results) {
-        const key = String(r.dimension_values?.[0] ?? '').toLowerCase();
-        out[key] = r.value;
+        parts[String(r.dimension_values?.[0] ?? '').toLowerCase()] = r.value;
       }
-      return out;
+      return { parts };
     }
   }
-  // Legacy time-series shape.
-  if (Array.isArray(d.values) && d.values.length) {
-    const total = d.values.reduce((s, v) => s + (Number(v.value) || 0), 0);
-    return { [metric]: total };
+  if (Array.isArray(entry.values) && entry.values.length) {
+    return { value: entry.values.reduce((s, v) => s + (Number(v.value) || 0), 0) };
   }
   return null;
 }
 
-/** One metric, one day. Returns null if the account or API won't serve it. */
-async function fetchMetric(metric, date) {
-  const base = {
-    metric,
+/** Fold one metric's parsed result into the CSV row. */
+function assign(row, name, parsed) {
+  if (!parsed) return;
+  if (name === 'follows_and_unfollows') {
+    // Breakdown key names have shifted across API versions; match loosely.
+    for (const [k, v] of Object.entries(parsed.parts || {})) {
+      if (k.includes('unfollow')) row.unfollows = v;
+      else if (k.includes('follow')) row.follows = v;
+    }
+  } else if (parsed.value !== undefined) {
+    row[name] = parsed.value;
+  }
+}
+
+async function request(metrics, date, { legacy = false } = {}) {
+  const params = {
+    metric: metrics.join(','),
     period: 'day',
     since: unix(date),
     until: unix(date, 1),
   };
-  try {
-    return parse(metric, await api('/me/insights', { ...base, metric_type: 'total_value' }));
-  } catch (err) {
-    // Some legacy metrics reject metric_type; a few need a plain request.
-    try {
-      return parse(metric, await api('/me/insights', base));
-    } catch {
-      log(`  · ${metric}: unavailable (${err.message.split(':').slice(1).join(':').trim()})`);
-      return null;
-    }
-  }
+  if (!legacy) params.metric_type = 'total_value';
+  return api('/me/insights', params);
 }
 
+/**
+ * Every metric for one day. One request when all is well; a handful when a
+ * metric name has gone stale and needs isolating.
+ */
 export async function collectDay(date) {
+  const cache = loadCache();
   const row = { date };
-  for (const metric of METRICS) {
-    const got = await fetchMetric(metric, date);
-    if (!got) continue;
-    if (metric === 'follows_and_unfollows') {
-      // Breakdown keys have shifted names across versions; match loosely.
-      for (const [k, v] of Object.entries(got)) {
-        if (k.includes('unfollow')) row.unfollows = v;
-        else if (k.includes('follow')) row.follows = v;
+  let cacheDirty = false;
+
+  const batch = METRICS.filter((m) => !cache.bad.includes(m) && !cache.legacy.includes(m));
+
+  // --- the happy path: one request for everything -------------------------
+  if (batch.length) {
+    try {
+      const res = await request(batch, date);
+      for (const entry of res.data || []) assign(row, entry.name, readEntry(entry));
+    } catch (err) {
+      if (isRateLimited(err)) throw err;
+
+      // Something in the batch is stale. Isolate it, once, and remember.
+      log('  batch request rejected — probing metrics individually');
+      for (const metric of batch) {
+        try {
+          const res = await request([metric], date);
+          assign(row, metric, readEntry(res.data?.[0]));
+        } catch (e1) {
+          if (isRateLimited(e1)) throw e1;
+          try {
+            const res = await request([metric], date, { legacy: true });
+            assign(row, metric, readEntry(res.data?.[0]));
+            cache.legacy.push(metric);
+            cacheDirty = true;
+            log(`  · ${metric}: needs the legacy request shape — noted`);
+          } catch (e2) {
+            if (isRateLimited(e2)) throw e2;
+            cache.bad.push(metric);
+            cacheDirty = true;
+            log(`  · ${metric}: unavailable, will stop asking (${e1.message})`);
+          }
+        }
       }
-    } else {
-      Object.assign(row, got);
     }
   }
+
+  // --- metrics known to need the older request shape ----------------------
+  for (const metric of cache.legacy) {
+    try {
+      const res = await request([metric], date, { legacy: true });
+      assign(row, metric, readEntry(res.data?.[0]));
+    } catch (err) {
+      if (isRateLimited(err)) throw err;
+    }
+  }
+
+  if (cacheDirty) saveCache(cache);
   return row;
 }
 
 // --- run -------------------------------------------------------------------
 if (import.meta.url === `file://${process.argv[1]}`) {
   // Yesterday, because today is still in progress and would record a partial day.
-  const target = process.argv[2] ||
-    isoDate(new Date(Date.now() - 86400_000));
+  const target = process.argv[2] || isoDate(new Date(Date.now() - 86400_000));
 
   log(`Collecting insights for ${target}`);
   const row = await collectDay(target);
@@ -117,6 +173,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   log(`Stored ${filled} metrics for ${target} · ${count} days on file`);
   log(`  reach ${row.reach ?? '—'} · views ${row.views ?? '—'} · profile views ${row.profile_views ?? '—'}`);
 
-  const total = readCsv('insights.csv').rows.length;
-  if (total === 1) log('First day recorded. Run `node scripts/backfill.mjs` to pull the last 90 days.');
+  if (readCsv('insights.csv').rows.length === 1) {
+    log('First day recorded. Run the backfill to pull the last 90 days.');
+  }
 }
