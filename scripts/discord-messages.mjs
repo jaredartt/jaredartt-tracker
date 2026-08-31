@@ -21,6 +21,7 @@ const COUNTABLE = new Set([0, 19]);
 const perDay = new Map();      // date -> { messages, humans, bots, authors:Set }
 const perChannel = new Map();  // date + channel -> count
 const perAuthor = new Map();   // date + author -> count
+const perHour = new Map();     // date + UTC hour -> count
 
 // Keys pair a date with a name. Thread names and pseudonyms both contain
 // spaces, so the separator has to be something a name can never hold.
@@ -50,6 +51,9 @@ for (const ch of channels) {
         d.authors.add(m.author.id);
         bump(perChannel, key(date, ch.name ?? ch.id));
         bump(perAuthor, key(date, authorLabel(m.author)));
+        // Stored as UTC date + hour; the dashboard converts to the reader's
+        // own timezone before drawing the weekly grid.
+        bump(perHour, key(date, String(m.timestamp.slice(11, 13))));
       }
     },
   });
@@ -90,9 +94,15 @@ const authorRows = [...perAuthor.entries()].map(([k, messages]) => {
 });
 rewrite('discord-authors.csv', ['date', 'author', 'messages'], authorRows);
 
+const hourRows = [...perHour.entries()].map(([k, messages]) => {
+  const [date, hour] = splitKey(k);
+  return { date, hour, messages };
+});
+rewrite('discord-hourly.csv', ['date', 'hour', 'messages'], hourRows);
+
 // Keep the author file to the same 90-day window as everything else.
 const cutoff = new Date(Date.now() - 95 * 86400_000).toISOString().slice(0, 10);
-for (const file of ['discord-authors.csv', 'discord-channel-daily.csv']) {
+for (const file of ['discord-authors.csv', 'discord-channel-daily.csv', 'discord-hourly.csv']) {
   const { header, rows } = readCsv(file);
   const kept = rows.filter((r) => r.date >= cutoff);
   if (kept.length !== rows.length) writeCsv(file, header, kept);

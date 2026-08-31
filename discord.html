@@ -68,6 +68,18 @@
     </details>
   </section>
 
+  <section class="block a-blue rise" style="animation-delay:.2s">
+    <div class="block-head"><span class="dot"></span><h2>When the server is awake</h2></div>
+    <p class="note" id="awake-note"></p>
+    <div class="heat"><div class="heat-inner"><div class="chart" id="activity"></div></div></div>
+  </section>
+
+  <section class="block a-teal rise" style="animation-delay:.21s">
+    <div class="block-head"><span class="dot"></span><h2>Member cohorts</h2></div>
+    <p class="note" id="cohort-note"></p>
+    <div class="chart" id="cohorts"></div>
+  </section>
+
   <div class="two-up">
     <section class="block a-orange rise" style="animation-delay:.22s">
       <div class="block-head"><span class="dot"></span><h2>Busiest channels</h2></div>
@@ -363,6 +375,68 @@
         </tr>`;
       }).join('')}</tbody>
     </table>` : '<div class="empty">No activity recorded yet.</div>';
+
+
+  // ---- when the server is awake -------------------------------------------
+  // Message counts are stored as UTC date + hour; they're folded into the
+  // reader's own weekday and hour here, so the grid means something locally.
+  const hourly = await load('data/discord-hourly.csv', parseCsv);
+  const actGrid = Array.from({ length: 7 }, () => Array(24).fill(0));
+  let actTotal = 0;
+  for (const r of hourly || []) {
+    const v = num(r.messages) || 0;
+    const d = new Date(`${r.date}T${String(r.hour).padStart(2, '0')}:00:00Z`);
+    if (Number.isNaN(+d)) continue;
+    actGrid[(d.getDay() + 6) % 7][d.getHours()] += v;
+    actTotal += v;
+  }
+
+  if (actTotal > 0) {
+    heatmap(document.getElementById('activity'),
+      actGrid.flatMap((row, weekday) => row.map((v, hour) => ({ weekday, hour, value: v }))),
+      { mono: true, unit: ' messages' });
+
+    let best = { v: -1 };
+    actGrid.forEach((row, wd) => row.forEach((v, h) => { if (v > best.v) best = { v, wd, h }; }));
+    const byHour = Array(24).fill(0);
+    actGrid.forEach(row => row.forEach((v, h) => { byHour[h] += v; }));
+    const peakHour = byHour.indexOf(Math.max(...byHour));
+    document.getElementById('awake-note').innerHTML =
+      `${fmt(actTotal)} messages placed by weekday and hour, in your local time. The busiest single
+       slot is <b>${dayName[best.wd]} ${hourLabel(best.h)}</b>, and across the whole week the server
+       peaks around <b>${hourLabel(peakHour)}</b> — the window to run a critique session or drop an
+       announcement.`;
+  } else {
+    document.getElementById('activity').innerHTML =
+      `<div class="empty">Starts filling from the next daily run.</div>`;
+    document.getElementById('awake-note').textContent =
+      'When conversation actually happens, by weekday and hour. The job began recording this today, so the grid fills in from tomorrow.';
+  }
+
+  // ---- member cohorts -----------------------------------------------------
+  const byMonth = new Map();
+  for (const r of joins) {
+    const m = r.date.slice(0, 7);
+    byMonth.set(m, (byMonth.get(m) || 0) + (num(r.joins) || 0));
+  }
+  const months = [...byMonth.entries()].sort();
+  if (months.length) {
+    const label = (m) => new Date(m + '-01T12:00:00Z')
+      .toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+    columnChart(document.getElementById('cohorts'),
+      months.map(([m, v]) => ({ label: `${label(m)} · ${fmt(v)} still here`, short: label(m), value: v })),
+      { height: 240, maxBar: 18 });
+
+    const total = months.reduce((s, [, v]) => s + v, 0);
+    const thisYear = String(new Date().getFullYear());
+    const recent = months.filter(([m]) => m.startsWith(thisYear)).reduce((s, [, v]) => s + v, 0);
+    const top = months.slice().sort((a, b) => b[1] - a[1])[0];
+    document.getElementById('cohort-note').innerHTML =
+      `Of the members here today, <b>${fmt(recent)}</b> joined during ${thisYear} —
+       ${Math.round((recent / total) * 100)}% of the ${fmt(total)} whose join date is known.
+       The biggest surviving intake was <b>${label(top[0])}</b> with ${fmt(top[1])}.
+       This counts survivors only, so it says nothing about how many joined and left again.`;
+  }
 
   document.getElementById('footer').textContent =
     `${members.length.toLocaleString()} hourly readings · ${messages.length} days of messages · ` +

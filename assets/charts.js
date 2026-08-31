@@ -280,7 +280,8 @@ function columnChart(host, bars, opts = {}) {
     const pad = { t: 20, r: 58, b: 30, l: 4 };
     const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
     const accent = css(host, '--accent') || '#2b6bff';
-    const gain = css(host, '--gain'), loss = css(host, '--loss');
+    const gain = css(host, '--gain');
+    const loss = css(host, '--loss');
 
     const vals = bars.map(b => b.value);
     const ticks = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals), 3);
@@ -359,7 +360,7 @@ function columnChart(host, bars, opts = {}) {
 }
 
 // --- heatmap ---------------------------------------------------------------
-function heatmap(host, cells) {
+function heatmap(host, cells, opts = {}) {
   const vals = cells.filter(c => c.value !== null).map(c => c.value);
   if (!vals.length) return emptyState(host, 'Needs about two weeks of hourly snapshots.');
   const tip = mountTip(host);
@@ -367,7 +368,8 @@ function heatmap(host, cells) {
   const min = Math.min(...vals, 0);
 
   responsive(host, (W) => {
-    const gain = css(host, '--gain'), loss = css(host, '--loss');
+    const gain = opts.mono ? css(host, '--accent') : css(host, '--gain');
+    const loss = css(host, '--loss');
     const left = 38, top = 22, gap = 3;
     const cw = (W - left) / 24, ch = 28;
     const H = top + ch * 7 + 8;
@@ -408,7 +410,9 @@ function heatmap(host, cells) {
         const rc = svg.getBoundingClientRect();
         tip.show((x + cw / 2) * (rc.width / W), y * (rc.height / H),
           `${dayName[c.weekday]} ${hourLabel(c.hour)}`,
-          c.value === null ? 'no data' : signed(Math.round(c.value * 10) / 10) + ' avg');
+          c.value === null ? 'no data'
+            : (opts.mono ? fmt(Math.round(c.value)) + (opts.unit || '')
+                         : signed(Math.round(c.value * 10) / 10) + ' avg'));
       });
       rect.addEventListener('pointerleave', () => { rect.style.transform = ''; tip.hide(); });
       svg.appendChild(rect);

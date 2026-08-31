@@ -39,6 +39,8 @@
     <div class="hero-sub" id="hero-sub"></div>
   </div>
 
+  <div class="spot a-orange rise" id="spot" style="animation-delay:.06s" hidden></div>
+
   <div class="stats stats-3" id="stats-net"></div>
   <div class="stats stats-4" id="stats-more"></div>
 
@@ -80,7 +82,13 @@
     </section>
   </div>
 
-  <section class="block a-violet rise" style="animation-delay:.3s; margin-top:24px">
+  <section class="block a-teal rise" style="animation-delay:.28s; margin-top:24px">
+    <div class="block-head"><span class="dot"></span><h2>What a post is worth</h2></div>
+    <p class="note" id="impact-note"></p>
+    <div id="impact"></div>
+  </section>
+
+  <section class="block a-violet rise" style="animation-delay:.3s">
     <div class="block-head"><span class="dot"></span><h2>Best posting times</h2></div>
     <p class="note" id="post-insight"></p>
     <div class="chart" id="posthours"></div>
@@ -381,6 +389,83 @@
           <td class="n">${fmt(p.interactions)}</td>
         </tr>`).join('')}</tbody>
     </table>` : '<div class="empty">No posts recorded yet.</div>';
+
+
+  // ---- days since the last post, and what posting is worth ----------------
+  // Every other number on this page is downstream of this one, so it gets the
+  // top of the page rather than a row in a table.
+  const postDates = (media || []).map(m => m.timestamp).filter(Boolean).sort();
+  if (postDates.length) {
+    const lastPost = new Date(postDates[postDates.length - 1]);
+    const days = Math.floor((Date.now() - lastPost) / 86400_000);
+    const spot = document.getElementById('spot');
+    spot.hidden = false;
+    spot.className = `spot rise ${days > 30 ? 'a-loss' : days > 7 ? 'a-orange' : 'a-teal'}`;
+    const when = lastPost.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    spot.innerHTML = `
+      <div class="spot-num">${fmt(days)}</div>
+      <div class="spot-txt">
+        <b>day${days === 1 ? '' : 's'} since your last post</b> — ${when}.
+        ${days > 30
+          ? 'Reach, profile views and follows all follow from posting; a quiet account loses a couple of followers a day whatever else you do.'
+          : 'Keep going — the panels below will show what it earned you.'}
+      </div>`;
+  }
+
+  // Compare days you posted against days you didn't. A post's effect lands the
+  // same day and the one after, so both are treated as "posting days".
+  const impactEl = document.getElementById('impact');
+  const postDay = new Set();
+  for (const ts of postDates) {
+    const d = ts.slice(0, 10);
+    postDay.add(d);
+    const n = new Date(d + 'T12:00:00Z'); n.setUTCDate(n.getUTCDate() + 1);
+    postDay.add(n.toISOString().slice(0, 10));
+  }
+
+  const withPost = ins.filter(r => postDay.has(r.date));
+  const without = ins.filter(r => !postDay.has(r.date));
+  const med = (rows, key) => {
+    const v = rows.map(r => num(r[key])).filter(x => x !== null).sort((a, b) => a - b);
+    if (!v.length) return null;
+    const m = v.length >> 1;
+    return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+  };
+
+  if (withPost.length >= 2 && without.length >= 2) {
+    const rows = [
+      { label: 'Reach', a: med(withPost, 'reach'), b: med(without, 'reach') },
+      { label: 'Profile views', a: med(withPost, 'profile_views'), b: med(without, 'profile_views') },
+      { label: 'Follows', a: med(withPost, 'follows'), b: med(without, 'follows') },
+      { label: 'Unfollows', a: med(withPost, 'unfollows'), b: med(without, 'unfollows') },
+    ].filter(r => r.a !== null && r.b !== null);
+
+    const max = Math.max(...rows.flatMap(r => [r.a, r.b]), 1);
+    impactEl.innerHTML = `<div class="hbars">${rows.map(r => `
+      <div class="hbar">
+        <div class="hbar-name">${r.label}</div>
+        <div class="hbar-track"><div class="hbar-fill" data-w="${(r.a / max) * 100}"></div></div>
+        <div class="hbar-val">${fmt(Math.round(r.a))}</div>
+      </div>
+      <div class="hbar">
+        <div class="hbar-name" style="opacity:.6">${r.label}, quiet days</div>
+        <div class="hbar-track"><div class="hbar-fill" data-w="${(r.b / max) * 100}" style="opacity:.4"></div></div>
+        <div class="hbar-val" style="opacity:.6">${fmt(Math.round(r.b))}</div>
+      </div>`).join('')}</div>`;
+    requestAnimationFrame(() => impactEl.querySelectorAll('.hbar-fill')
+      .forEach(el => { el.style.width = el.dataset.w + '%'; }));
+
+    const rr = rows.find(r => r.label === 'Reach');
+    document.getElementById('impact-note').innerHTML =
+      `Median on the ${withPost.length} days around a post, against the ${without.length} quiet days.` +
+      (rr && rr.b ? ` Posting is worth roughly <b>${(rr.a / Math.max(rr.b, 0.5)).toFixed(1)}×</b> the reach of a quiet day.` : '');
+  } else {
+    impactEl.innerHTML = `<div class="empty">Nothing to compare yet — there are no posts inside the tracked window.</div>`;
+    document.getElementById('impact-note').innerHTML =
+      `This fills in the day you post again. It compares reach, profile views, follows and unfollows
+       on posting days against quiet ones, so you get evidence rather than a hunch about whether
+       posting moves the numbers.`;
+  }
 
   document.getElementById('footer').textContent =
     `${followers.length.toLocaleString()} hourly readings · ${ins.length} days of insights · ` +

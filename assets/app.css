@@ -305,3 +305,17 @@
   @keyframes breathe { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   .clock b { color: var(--ink); font-weight: 500; }
   @media (max-width: 620px) { .clock .lbl { display: none; } }
+
+/* ---------- spotlight strip ---------- */
+.spot {
+  align-items: center; background: rgba(var(--wash), .09); border-radius: 26px;
+  display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 24px; padding: 26px 32px;
+  transition: background .3s;
+}
+.spot:hover { background: rgba(var(--wash), .13); }
+.spot-num {
+  color: var(--accent); font-family: Unbounded, sans-serif; font-size: clamp(38px, 7vw, 58px);
+  font-weight: 800; letter-spacing: -0.04em; line-height: 1;
+}
+.spot-txt { color: var(--ink-2); font-size: 14px; max-width: 62ch; }
+.spot-txt b { color: var(--ink); font-weight: 500; }
