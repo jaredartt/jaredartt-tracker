@@ -319,3 +319,33 @@
 }
 .spot-txt { color: var(--ink-2); font-size: 14px; max-width: 62ch; }
 .spot-txt b { color: var(--ink); font-weight: 500; }
+
+/* ---------- the little guy ---------- */
+.buddy { align-items: center; display: flex; gap: 20px; margin-bottom: 34px; }
+.buddy-face { flex: 0 0 auto; height: 78px; width: 78px; }
+.buddy-face svg { display: block; height: 100%; width: 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  .buddy-face { animation: bob 3.6s ease-in-out infinite; }
+  .buddy .eye { animation: blink 6s infinite; transform-box: fill-box; transform-origin: center; }
+  .buddy .eye:last-of-type { animation-delay: .06s; }
+  .bubble { animation: pop .5s cubic-bezier(.2,.9,.3,1.4) backwards; animation-delay: .35s; }
+}
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.12); } }
+@keyframes pop { from { opacity: 0; transform: translateX(-10px) scale(.96); } to { opacity: 1; transform: none; } }
+.buddy-face:hover { animation-play-state: paused; }
+.buddy-face:active svg { transform: scale(.92); transition: transform .12s; }
+
+.bubble {
+  background: rgba(var(--wash), .11); border-radius: 22px; color: var(--ink-2);
+  font-size: 14.5px; line-height: 1.65; padding: 18px 22px; position: relative; max-width: 66ch;
+}
+.bubble b { color: var(--ink); font-weight: 500; }
+.bubble::before {
+  border: 9px solid transparent; border-right-color: rgba(var(--wash), .11);
+  content: ''; left: -18px; position: absolute; top: 26px;
+}
+@media (max-width: 620px) {
+  .buddy { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .bubble::before { border-right-color: transparent; border-bottom-color: rgba(var(--wash), .11); left: 22px; top: -18px; }
+}

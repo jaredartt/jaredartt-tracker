@@ -44,6 +44,8 @@
   <div class="stats stats-3" id="stats-net"></div>
   <div class="stats stats-4" id="stats-more"></div>
 
+  <div id="buddy" class="buddy a-blue"></div>
+
   <section class="block a-blue rise" style="animation-delay:.1s">
     <div class="block-head">
       <span class="dot"></span><h2>Follower growth</h2>
@@ -465,6 +467,35 @@
       `This fills in the day you post again. It compares reach, profile views, follows and unfollows
        on posting days against quiet ones, so you get evidence rather than a hunch about whether
        posting moves the numbers.`;
+  }
+
+
+  // ---- the little guy, reading the numbers back in plain language ---------
+  {
+    const daysSince = postDates.length
+      ? Math.floor((Date.now() - new Date(postDates[postDates.length - 1])) / 86400_000) : null;
+    const reachPer = (() => {
+      const v = (media || []).map(m => m.insights?.reach).filter(Number.isFinite).sort((a, b) => a - b);
+      return v.length ? v[v.length >> 1] : null;
+    })();
+    const f30 = sumLast(ins, 'follows', 30), u30 = sumLast(ins, 'unfollows', 30);
+    const net = d30 ?? 0;
+
+    let mood = 'ok', text;
+    if (net > 0) {
+      mood = 'happy';
+      text = `Good month — <b>${signed(net)}</b> followers. ${f30 ? `${fmt(f30)} people followed you and ${fmt(u30)} left, so you're comfortably ahead. ` : ''}` +
+        (daysSince !== null && daysSince <= 14
+          ? `You posted ${daysSince === 0 ? 'today' : daysSince === 1 ? 'yesterday' : `${daysSince} days ago`} — keep that rhythm and this line keeps pointing up.`
+          : `Worth posting again soon to keep it going.`);
+    } else if (daysSince !== null && daysSince > 45) {
+      mood = 'sad';
+      text = `I'll be straight with you. You're <b>down ${fmt(Math.abs(net))}</b> followers this month, and it's been <b>${fmt(daysSince)} days</b> since your last post. Those two facts are the same fact — a quiet account loses a couple of people a day no matter what else you do. ` +
+        (reachPer ? `But your work still lands: your posts have been reaching about <b>${fmt(reachPer)}</b> people each. That audience hasn't gone anywhere, it's just waiting.` : `Nothing is broken here. It's waiting for you.`);
+    } else {
+      text = `A slow month — <b>${net === 0 ? 'flat' : 'down ' + fmt(Math.abs(net))}</b>${net === 0 ? '' : ' followers'}. ${u30 ? `${fmt(u30)} people left and ${fmt(f30)} joined. ` : ''}Not alarming on its own; it's the kind of drift that reverses as soon as you're posting regularly again.`;
+    }
+    buddy(document.getElementById('buddy'), { mood, text });
   }
 
   document.getElementById('footer').textContent =

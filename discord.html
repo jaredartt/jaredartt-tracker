@@ -43,6 +43,8 @@
   <div class="stats stats-3" id="stats-messages"></div>
   <div class="stats stats-3" id="stats-more"></div>
 
+  <div id="buddy" class="buddy a-violet"></div>
+
   <section class="block a-violet rise" style="animation-delay:.1s">
     <div class="block-head">
       <span class="dot"></span><h2>Member growth</h2>
@@ -436,6 +438,42 @@
        ${Math.round((recent / total) * 100)}% of the ${fmt(total)} whose join date is known.
        The biggest surviving intake was <b>${label(top[0])}</b> with ${fmt(top[1])}.
        This counts survivors only, so it says nothing about how many joined and left again.`;
+  }
+
+
+  // ---- the little guy -----------------------------------------------------
+  {
+    const wk = pct(m7, p7), mo = pct(m30, p30);
+    const top = chanRanked[0];
+    const net = d30 ?? 0;
+
+    let mood = net > 0 ? 'happy' : net < 0 ? 'sad' : 'ok';
+    let text = net > 0
+      ? `Artist Academy's in good shape — <b>${fmt(current)}</b> members, <b>${signed(net)}</b> this month. `
+      : `<b>${fmt(current)}</b> members, <b>${signed(net)}</b> over the month. `;
+
+    if (posters7) {
+      text += `<b>${fmt(posters7)}</b> people actually said something in the last week`;
+      text += top ? `, mostly in <b>#${escapeHtml(top[0])}</b>. ` : '. ';
+    }
+
+    // Four honest combinations. The "one quiet week" reassurance only belongs
+    // on a week that was actually quiet — otherwise it reads as nonsense.
+    if (wk !== null) {
+      const monthUp = mo !== null && mo >= 0;
+      if (wk >= 0 && monthUp) {
+        text += `Chat is up ${wk}% on last week, and the month is up ${mo}% too — it's building.`;
+      } else if (wk >= 0) {
+        text += `Chat is up ${wk}% on last week, which is a decent turn${mo !== null ? `, though the month overall is still down ${Math.abs(mo)}%` : ''}.`;
+      } else if (monthUp) {
+        text += `Chat is down ${Math.abs(wk)}% on last week, but the month as a whole is up ${mo}% — one quiet week inside a rising month is normal, so I wouldn't read much into it yet.`;
+        if (mood === 'happy') mood = 'ok';
+      } else {
+        text += `Chat is down ${Math.abs(wk)}% on last week${mo !== null ? ` and ${Math.abs(mo)}% on the month` : ''} — worth keeping an eye on.`;
+        mood = 'sad';
+      }
+    }
+    buddy(document.getElementById('buddy'), { mood, text });
   }
 
   document.getElementById('footer').textContent =

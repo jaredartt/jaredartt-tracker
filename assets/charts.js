@@ -515,3 +515,32 @@ function startUpdateClock(minuteOffset) {
   tick();
   setInterval(tick, 1000);
 }
+
+// ---------------------------------------------------------------------------
+// A small companion that reads the numbers back in plain language.
+// Its expression follows the data — cheerful when things are growing, level
+// when they aren't. It never pretends a bad month is a good one; a mascot that
+// smiles through a decline is just a lie with a face on it.
+// ---------------------------------------------------------------------------
+function buddy(host, { mood = 'ok', text }) {
+  if (!host) return;
+  const mouth = {
+    happy: 'M35,58 Q50,72 65,58',
+    ok:    'M39,62 Q50,68 61,62',
+    sad:   'M39,67 Q50,58 61,67',
+  }[mood] || 'M39,62 Q50,68 61,62';
+
+  host.className = 'buddy rise';
+  host.innerHTML = `
+    <div class="buddy-face" aria-hidden="true">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="var(--accent)"/>
+        <circle cx="29" cy="60" r="8" fill="#fff" opacity=".32"/>
+        <circle cx="71" cy="60" r="8" fill="#fff" opacity=".32"/>
+        <ellipse class="eye" cx="35" cy="45" rx="5.5" ry="7" fill="var(--page)"/>
+        <ellipse class="eye" cx="65" cy="45" rx="5.5" ry="7" fill="var(--page)"/>
+        <path d="${mouth}" fill="none" stroke="var(--page)" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="bubble">${text}</div>`;
+}
