@@ -87,9 +87,11 @@ function assign(row, name, parsed) {
     if (!parsed.parts) return;
     // Absent rows mean zero, so start there and let any rows override.
     let follows = 0, unfollows = 0;
-    // Breakdown key names have shifted across API versions; match loosely.
+    // Meta labels these FOLLOWER / NON_FOLLOWER — "became a follower" and
+    // "became a non-follower". Match NON_ and UNFOLLOW first: both contain the
+    // substring "follow", so a loose test would file unfollows as follows.
     for (const [k, v] of Object.entries(parsed.parts)) {
-      if (k.includes('unfollow')) unfollows = v;
+      if (k.includes('unfollow') || k.startsWith('non')) unfollows = v;
       else if (k.includes('follow')) follows = v;
     }
     row.follows = follows;
