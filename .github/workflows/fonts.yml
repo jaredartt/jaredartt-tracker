@@ -1,0 +1,24 @@
+name: Fetch fonts
+# One-off. Downloads Unbounded and Lexend into the repo so the dashboard has no
+# runtime dependency on Google's servers.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: tracker-write
+jobs:
+  fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node scripts/fetch-fonts.mjs
+      - run: |
+          git config user.name "jaredartt-tracker"
+          git config user.email "actions@github.com"
+          git add fonts/
+          git diff --staged --quiet || git commit -m "Self-host Unbounded and Lexend"
+          git pull --rebase --autostash origin main || true
+          git push
