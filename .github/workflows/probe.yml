@@ -1,6 +1,11 @@
 name: Probe follows metric
 on:
   workflow_dispatch:
+    inputs:
+      date:
+        description: 'Day to probe (YYYY-MM-DD)'
+        type: string
+        default: '2026-06-04'
 permissions:
   contents: write
 concurrency:
@@ -14,7 +19,7 @@ jobs:
         with: { node-version: 22 }
       - env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
-        run: node scripts/probe-follows.mjs
+        run: node scripts/probe-follows.mjs "${{ inputs.date || '2026-06-04' }}"
       - run: |
           git config user.name "jaredartt-tracker"
           git config user.email "actions@github.com"

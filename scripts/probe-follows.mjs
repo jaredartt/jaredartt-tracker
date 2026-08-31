@@ -6,7 +6,7 @@
 import { api, writeJson, log } from './lib.mjs';
 
 const DAY = 86400;
-const since = Math.floor(Date.parse('2026-08-30T00:00:00Z') / 1000);
+const since = Math.floor(Date.parse((process.argv[2] || '2026-06-04') + 'T00:00:00Z') / 1000);
 const until = since + DAY;
 
 const attempts = [
