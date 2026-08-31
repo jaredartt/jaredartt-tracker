@@ -64,9 +64,11 @@ function readEntry(entry) {
   if (tv) {
     if (typeof tv.value === 'number') return { value: tv.value };
     const breakdown = tv.breakdowns?.[0];
-    if (breakdown?.results) {
+    if (breakdown) {
+      // Meta omits `results` entirely on a day with no activity. That is an
+      // answer — zero — not a malformed response.
       const parts = {};
-      for (const r of breakdown.results) {
+      for (const r of breakdown.results || []) {
         parts[String(r.dimension_values?.[0] ?? '').toLowerCase()] = r.value;
       }
       return { parts };
@@ -82,11 +84,16 @@ function readEntry(entry) {
 function assign(row, name, parsed) {
   if (!parsed) return;
   if (name === 'follows_and_unfollows') {
+    if (!parsed.parts) return;
+    // Absent rows mean zero, so start there and let any rows override.
+    let follows = 0, unfollows = 0;
     // Breakdown key names have shifted across API versions; match loosely.
-    for (const [k, v] of Object.entries(parsed.parts || {})) {
-      if (k.includes('unfollow')) row.unfollows = v;
-      else if (k.includes('follow')) row.follows = v;
+    for (const [k, v] of Object.entries(parsed.parts)) {
+      if (k.includes('unfollow')) unfollows = v;
+      else if (k.includes('follow')) follows = v;
     }
+    row.follows = follows;
+    row.unfollows = unfollows;
   } else if (parsed.value !== undefined) {
     row[name] = parsed.value;
   }
@@ -167,11 +174,10 @@ export async function collectDay(date) {
       if (parsed?.parts) {
         assign(row, name, parsed);
       } else {
-        // A bare number here can't be split into follows vs unfollows, and a
-        // wrong number is worse than a blank one. Leave it empty.
-        cache.bad.push(name);
-        cacheDirty = true;
-        log(`  · ${name}: returned no breakdown — leaving these columns blank`);
+        // A bare number can't be split into follows vs unfollows, and a wrong
+        // number is worse than a blank one. Leave it empty, but keep asking —
+        // this shape varies by day, not permanently.
+        log(`  · ${name}: no breakdown returned for ${date}`);
       }
     } catch (err) {
       if (isRateLimited(err)) throw err;
