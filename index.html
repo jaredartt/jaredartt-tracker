@@ -215,19 +215,60 @@
       <div class="stat-sub">${s.sub}</div>
     </div>`;
 
+  // Net is measured across the last N days of the follower series, so the event
+  // counts must be summed over exactly those same dates — otherwise the two
+  // columns describe different weeks and can't be compared at all.
+  const insByDate = new Map(ins.map(r => [r.date, r]));
+
+  // Instagram finalises the follow/unfollow split hours after the other
+  // metrics. A very recent day showing real reach but exactly zero follows AND
+  // zero unfollows hasn't landed yet — counting that as a true zero silently
+  // undercounts the week, so treat it as pending instead.
+  const settleCutoff = new Date(Date.now() - 3 * 86400_000).toISOString().slice(0, 10);
+  const unsettled = (r) => Boolean(r) && r.date >= settleCutoff && (num(r.reach) ?? 0) > 20
+    && num(r.follows) === 0 && num(r.unfollows) === 0;
+
+  const sumOver = (dates, key) => {
+    let sum = 0, missing = 0, seen = 0;
+    for (const d of dates) {
+      const row = insByDate.get(d);
+      const v = num(row?.[key]);
+      if (v === null || unsettled(row)) missing++; else { sum += v; seen++; }
+    }
+    return { sum, missing, seen };
+  };
+  const pending = (m) => m ? ` · ${m} day${m === 1 ? '' : 's'} not published yet` : '';
+
   // Colour follows the metric, not the row, so each column reads straight down:
   // net in blue, follows in teal, unfollows in coral.
-  const periodRow = (netVal, days, netSub) => [
-    { a: 'a-blue', label: 'Net', value: delta(netVal), cls: dcls(netVal),
-      sub: netSub || 'followers gained minus lost' },
-    { a: 'a-teal', label: 'Follows', value: compact(sumLast(ins, 'follows', days)),
-      sub: days === 1 ? 'yesterday' : `over ${days} days` },
-    { a: 'a-loss', label: 'Unfollows', value: compact(sumLast(ins, 'unfollows', days)),
-      sub: days === 1 ? 'yesterday' : `over ${days} days` },
-  ];
+  const periodRow = (netVal, days, netSub) => {
+    const dates = daily.slice(-days).map(([d]) => d);
+    const f = sumOver(dates, 'follows'), u = sumOver(dates, 'unfollows');
+    return [
+      { a: 'a-blue', label: 'Net', value: delta(netVal), cls: dcls(netVal),
+        sub: netSub || 'change in your follower count' },
+      { a: 'a-teal', label: 'Follows', value: f.seen ? compact(f.sum) : '—',
+        sub: `over ${days} days${pending(f.missing)}` },
+      { a: 'a-loss', label: 'Unfollows', value: u.seen ? compact(u.sum) : '—',
+        sub: `over ${days} days${pending(u.missing)}` },
+    ];
+  };
 
-  document.getElementById('stats-24').innerHTML =
-    periodRow(d24, 1, d24 === null ? 'needs a day of readings' : 'measured hourly').map(tile).join('');
+  // The 24-hour row is the exception: net is a true rolling 24 hours from the
+  // hourly readings, but Instagram has published nothing for today, so the
+  // event columns show yesterday's complete day and say so.
+  const lastDay = ins[ins.length - 1];
+  const lastPending = unsettled(lastDay);
+  const daySub = lastPending ? 'yesterday · not published yet' : 'yesterday';
+  document.getElementById('stats-24').innerHTML = [
+    { a: 'a-blue', label: 'Net', value: delta(d24), cls: dcls(d24),
+      sub: d24 === null ? 'needs a day of readings' : 'change in your follower count' },
+    { a: 'a-teal', label: 'Follows', cls: lastPending ? 'pending' : '',
+      value: lastPending ? '—' : compact(num(lastDay?.follows)), sub: daySub },
+    { a: 'a-loss', label: 'Unfollows', cls: lastPending ? 'pending' : '',
+      value: lastPending ? '—' : compact(num(lastDay?.unfollows)), sub: daySub },
+  ].map(tile).join('');
+
   document.getElementById('stats-7').innerHTML =
     periodRow(d7, 7).map((t, i) => tile(t, i + 3)).join('');
   document.getElementById('stats-30').innerHTML =
@@ -240,20 +281,18 @@
       sub: 'people who tapped through, 30 days' },
   ].map((t, i) => tile(t, i + 9)).join('');
 
-  // The columns deliberately won't reconcile, for two concrete reasons. Naming
-  // them beats letting it look like an arithmetic bug.
-  // Say exactly how far apart the two windows are, rather than hand-waving —
-  // the gap is often two days, which is enough to flip the sign on a good week.
+  // Two columns, two sources. Say plainly what each one is so the difference
+  // reads as a fact about Instagram rather than a mistake in the arithmetic.
   const lag = ins.length
     ? Math.round((Date.now() - Date.parse(ins[ins.length - 1].date + 'T12:00:00Z')) / 86400_000)
     : null;
   document.getElementById('stats-note').innerHTML =
-    `<b>Net</b> is your follower count now versus then — measured hourly, current to the last reading.
-     <b>Follows</b> and <b>unfollows</b> are Instagram's own event counts, and Instagram publishes
-     those on a delay${lag && lag > 1 ? ` — currently running <b>${lag} days</b> behind` : ''}.
-     So on an active week the columns can disagree sharply, even in direction: a surge shows up in
-     net immediately and in the follow counts days later. They also measure different things, and
-     drift apart when accounts are deleted or removed as spam.`;
+    `<b>Net</b> is the change in your actual follower count, measured hourly and current to the last
+     reading. <b>Follows</b> and <b>unfollows</b> are Instagram's own event counts for the same days —
+     but Instagram publishes those on a delay${lag && lag > 1 ? `, currently <b>${lag} days</b> behind` : ''},
+     so the most recent days of a window are missing and the tiles say how many. Even once they land
+     the two won't match exactly: net also moves when accounts are deleted or removed as spam, which
+     nobody counts as an unfollow.`;
 
   // ---- growth chart -------------------------------------------------------
   const rangesEl = document.getElementById('ranges');
