@@ -43,8 +43,17 @@
 
   <div class="spot a-orange rise" id="spot" style="animation-delay:.06s" hidden></div>
 
-  <div class="stats stats-3" id="stats-net"></div>
-  <div class="stats stats-4" id="stats-more"></div>
+  <div class="row-label rise">Last 24 hours</div>
+  <div class="stats stats-3" id="stats-24"></div>
+
+  <div class="row-label rise">Last 7 days</div>
+  <div class="stats stats-3" id="stats-7"></div>
+
+  <div class="row-label rise">Last 30 days</div>
+  <div class="stats stats-3" id="stats-30"></div>
+
+  <div class="stats stats-2" id="stats-audience"></div>
+  <p class="stats-note" id="stats-note"></p>
 
   <section class="block a-blue rise" style="animation-delay:.1s">
     <div class="block-head">
@@ -199,27 +208,46 @@
 
   const delta = (v) => v === null ? '—' : signed(v);
   const dcls = (v) => v === null ? 'pending' : (v >= 0 ? 'up' : 'down');
-
-  const netTiles = [
-    { a: 'a-teal',   label: 'Last 24 hours', value: delta(d24), cls: dcls(d24),
-      sub: d24 === null ? 'needs a day of readings' : 'net followers' },
-    { a: 'a-blue',   label: 'Last 7 days',   value: delta(d7),  cls: dcls(d7),  sub: 'net followers' },
-    { a: 'a-violet', label: 'Last 30 days',  value: delta(d30), cls: dcls(d30), sub: 'net followers' },
-  ];
-  const moreTiles = [
-    { a: 'a-teal',   label: 'Follows',       value: compact(sumLast(ins, 'follows', 30)),       sub: 'gained, last 30 days' },
-    { a: 'a-loss',   label: 'Unfollows',     value: compact(sumLast(ins, 'unfollows', 7)),      sub: 'lost, last 7 days' },
-    { a: 'a-orange', label: 'Reach',         value: compact(sumLast(ins, 'reach', 30)),         sub: 'last 30 days' },
-    { a: 'a-pink',   label: 'Profile views', value: compact(sumLast(ins, 'profile_views', 30)), sub: 'last 30 days' },
-  ];
   const tile = (s, i) => `
-    <div class="stat ${s.a} rise" style="animation-delay:${.06 + i * .04}s">
+    <div class="stat ${s.a} rise" style="animation-delay:${.06 + i * .03}s">
       <div class="stat-label">${s.label}</div>
       <div class="stat-value ${s.cls || ''}">${s.value}</div>
       <div class="stat-sub">${s.sub}</div>
     </div>`;
-  document.getElementById('stats-net').innerHTML = netTiles.map(tile).join('');
-  document.getElementById('stats-more').innerHTML = moreTiles.map((s, i) => tile(s, i + 3)).join('');
+
+  // Colour follows the metric, not the row, so each column reads straight down:
+  // net in blue, follows in teal, unfollows in coral.
+  const periodRow = (netVal, days, netSub) => [
+    { a: 'a-blue', label: 'Net', value: delta(netVal), cls: dcls(netVal),
+      sub: netSub || 'followers gained minus lost' },
+    { a: 'a-teal', label: 'Follows', value: compact(sumLast(ins, 'follows', days)),
+      sub: days === 1 ? 'yesterday' : `over ${days} days` },
+    { a: 'a-loss', label: 'Unfollows', value: compact(sumLast(ins, 'unfollows', days)),
+      sub: days === 1 ? 'yesterday' : `over ${days} days` },
+  ];
+
+  document.getElementById('stats-24').innerHTML =
+    periodRow(d24, 1, d24 === null ? 'needs a day of readings' : 'measured hourly').map(tile).join('');
+  document.getElementById('stats-7').innerHTML =
+    periodRow(d7, 7).map((t, i) => tile(t, i + 3)).join('');
+  document.getElementById('stats-30').innerHTML =
+    periodRow(d30, 30).map((t, i) => tile(t, i + 6)).join('');
+
+  document.getElementById('stats-audience').innerHTML = [
+    { a: 'a-orange', label: 'Reach', value: compact(sumLast(ins, 'reach', 30)),
+      sub: 'accounts that saw your work, 30 days' },
+    { a: 'a-pink', label: 'Profile views', value: compact(sumLast(ins, 'profile_views', 30)),
+      sub: 'people who tapped through, 30 days' },
+  ].map((t, i) => tile(t, i + 9)).join('');
+
+  // The columns deliberately won't reconcile, for two concrete reasons. Naming
+  // them beats letting it look like an arithmetic bug.
+  document.getElementById('stats-note').innerHTML =
+    `<b>Net</b> is your follower count now versus then, measured hourly and including today so far.
+     <b>Follows</b> and <b>unfollows</b> are Instagram's own event counts, which it only publishes
+     up to yesterday. So the columns won't add up exactly: net runs a day further forward, and the
+     two figures come from different Instagram measurements that drift apart when accounts are
+     deleted or removed as spam.`;
 
   // ---- growth chart -------------------------------------------------------
   const rangesEl = document.getElementById('ranges');
