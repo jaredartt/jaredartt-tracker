@@ -242,12 +242,18 @@
 
   // The columns deliberately won't reconcile, for two concrete reasons. Naming
   // them beats letting it look like an arithmetic bug.
+  // Say exactly how far apart the two windows are, rather than hand-waving —
+  // the gap is often two days, which is enough to flip the sign on a good week.
+  const lag = ins.length
+    ? Math.round((Date.now() - Date.parse(ins[ins.length - 1].date + 'T12:00:00Z')) / 86400_000)
+    : null;
   document.getElementById('stats-note').innerHTML =
-    `<b>Net</b> is your follower count now versus then, measured hourly and including today so far.
-     <b>Follows</b> and <b>unfollows</b> are Instagram's own event counts, which it only publishes
-     up to yesterday. So the columns won't add up exactly: net runs a day further forward, and the
-     two figures come from different Instagram measurements that drift apart when accounts are
-     deleted or removed as spam.`;
+    `<b>Net</b> is your follower count now versus then — measured hourly, current to the last reading.
+     <b>Follows</b> and <b>unfollows</b> are Instagram's own event counts, and Instagram publishes
+     those on a delay${lag && lag > 1 ? ` — currently running <b>${lag} days</b> behind` : ''}.
+     So on an active week the columns can disagree sharply, even in direction: a surge shows up in
+     net immediately and in the follow counts days later. They also measure different things, and
+     drift apart when accounts are deleted or removed as spam.`;
 
   // ---- growth chart -------------------------------------------------------
   const rangesEl = document.getElementById('ranges');

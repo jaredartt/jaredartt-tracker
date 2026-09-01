@@ -195,23 +195,46 @@ export async function collectDay(date) {
 
 // --- run -------------------------------------------------------------------
 if (import.meta.url === `file://${process.argv[1]}`) {
-  // Yesterday, because today is still in progress and would record a partial day.
-  const target = process.argv[2] || isoDate(new Date(Date.now() - 86400_000));
+  const arg = process.argv[2];
 
-  log(`Collecting insights for ${target}`);
-  const row = await collectDay(target);
-  const filled = Object.keys(row).filter((k) => k !== 'date').length;
+  // Instagram finalises a day's follows/unfollows some hours after midnight —
+  // sometimes after this job has already run. Fetching each day exactly once and
+  // never again bakes in whatever happened to be ready, which is how 30 August
+  // ended up recorded as zero follows on a day with 112 reach. Each run now
+  // re-collects the last few days and overwrites them, so late figures heal.
+  const RECENT_DAYS = 3;
 
-  if (!filled) {
-    log('No metrics returned. Check the token and that the account is a professional account.');
+  const targets = arg
+    ? [arg]
+    : Array.from({ length: RECENT_DAYS }, (_, i) =>
+        isoDate(new Date(Date.now() - (i + 1) * 86400_000))).reverse();
+
+  log(`Collecting insights for ${targets.join(', ')}`);
+
+  let stored = 0;
+  for (const target of targets) {
+    let row;
+    try {
+      row = await collectDay(target);
+    } catch (err) {
+      if (isRateLimited(err)) { log('Rate limited — stopping; the next run catches up.'); break; }
+      log(`${target}: ${err.message}`);
+      continue;
+    }
+
+    const filled = Object.keys(row).filter((k) => k !== 'date').length;
+    if (!filled) { log(`${target}: nothing returned`); continue; }
+
+    upsertCsv('insights.csv', HEADER, row, 'date');
+    stored++;
+    log(`  ${target}: reach ${row.reach ?? '—'} · views ${row.views ?? '—'} · ` +
+        `profile views ${row.profile_views ?? '—'} · +${row.follows ?? '—'} / -${row.unfollows ?? '—'}`);
+  }
+
+  if (!stored) {
+    log('No metrics returned at all. Check the token and that the account is a professional account.');
     process.exit(1);
   }
 
-  const count = upsertCsv('insights.csv', HEADER, row, 'date');
-  log(`Stored ${filled} metrics for ${target} · ${count} days on file`);
-  log(`  reach ${row.reach ?? '—'} · views ${row.views ?? '—'} · profile views ${row.profile_views ?? '—'}`);
-
-  if (readCsv('insights.csv').rows.length === 1) {
-    log('First day recorded. Run the backfill to pull the last 90 days.');
-  }
+  log(`${readCsv('insights.csv').rows.length} days on file`);
 }
